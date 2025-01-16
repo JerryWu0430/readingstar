@@ -6,29 +6,24 @@ import {
   Pressable,
   StyleSheet,
   SafeAreaView,
+  TextInput,
+  useColorScheme,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import WebView from 'react-native-webview';
-import { TextInput } from 'react-native';
-import { Button } from 'react-native';
-import { useColorScheme } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 
-
-
-
-
+const menuSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>`;
+const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2.5L8.42,8.06L2,9.74L6.2,14.88L5.82,21.5L12,19.09L18.18,21.5L17.8,14.88L22,9.74L15.58,8.06L12,2.5M9.38,10.5C10,10.5 10.5,11 10.5,11.63A1.12,1.12 0 0,1 9.38,12.75C8.75,12.75 8.25,12.25 8.25,11.63C8.25,11 8.75,10.5 9.38,10.5M14.63,10.5C15.25,10.5 15.75,11 15.75,11.63A1.12,1.12 0 0,1 14.63,12.75C14,12.75 13.5,12.25 13.5,11.63C13.5,11 14,10.5 14.63,10.5M9,15H15C14.5,16.21 13.31,17 12,17C10.69,17 9.5,16.21 9,15Z" /></svg>`;
+const accountSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6,17C6,15 10,13.9 12,13.9C14,13.9 18,15 18,17V18H6M15,9A3,3 0 0,1 12,12A3,3 0 0,1 9,9A3,3 0 0,1 12,6A3,3 0 0,1 15,9M3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3H5C3.89,3 3,3.9 3,5Z" /></svg>`;
+const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" /></svg>`;
 
 export default function App() {
   const [score, setScore] = useState(550);
   const [selectedSong, setSelectedSong] = useState('Twinkle, Twinkle...');
   const [difficulty, setDifficulty] = useState('Easy');
-    const [youtubeUrl, setYoutubeUrl] = useState('');
-    const [embedUrl, setEmbedUrl] = useState('');
-    const colorScheme = useColorScheme();
-
-
-
-
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [embedUrl, setEmbedUrl] = useState('');
+  const colorScheme = useColorScheme();
 
   const playlist = [
     'Humpty Dumpty',
@@ -40,34 +35,33 @@ export default function App() {
     'Song #1',
     'Song #2',
     'Song #3',
-    'Song #4'
-    ];
+    'Song #4',
+  ];
 
-    const getYoutubeEmbedUrl = (url) => {
-        const videoId = url.split('v=')[1];
-        const ampersandPosition = videoId ? videoId.indexOf('&') : -1;
-        const finalVideoId = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
-        setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}`);
-    };
+  interface YoutubeUrl {
+    url: string;
+  }
 
-
-
+  const getYoutubeEmbedUrl = (url: string): void => {
+    const videoId: string | undefined = url.split('v=')[1];
+    const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
+    const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
+    setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}`);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Windows-style Title Bar */}
       <View style={styles.titleBar}>
-        <Icon name="menu" size={24} color="#000" />
+        <SvgXml xml={menuSvg} width={24} height={24} />
         <Text style={styles.titleText}>Reading Star</Text>
-        <Icon name="star" size={20} color="#000" />
+        <SvgXml xml={starSvg} width={20} height={20} />
         <View style={styles.titleBarRight}>
           <Text>user.edu.uk</Text>
-          <Icon name="account" size={24} color="#000" />
+          <SvgXml xml={accountSvg} width={24} height={24} />
         </View>
       </View>
 
       <View style={styles.content}>
-        {/* Playlist Sidebar (Windows-style) */}
         <View style={styles.sidebar}>
           <Text style={styles.playlistTitle}>Playlist #1</Text>
           <ScrollView>
@@ -76,14 +70,14 @@ export default function App() {
                 key={index}
                 style={[
                   styles.playlistItem,
-                  song === selectedSong && styles.playlistItemSelected
+                  song === selectedSong && styles.playlistItemSelected,
                 ]}
                 onPress={() => setSelectedSong(song)}
               >
                 <Text
                   style={[
                     styles.playlistItemText,
-                    song === selectedSong && styles.playlistItemTextSelected
+                    song === selectedSong && styles.playlistItemTextSelected,
                   ]}
                 >
                   {song}
@@ -93,69 +87,51 @@ export default function App() {
           </ScrollView>
         </View>
 
-        {/* Main Content */}
         <View style={styles.mainContent}>
-          {/* Score Display */}
           <View style={styles.scoreContainer}>
             <Text style={styles.scoreText}>Score: {score}</Text>
-                  </View>
+          </View>
 
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={[
-                        styles.textInput,
-                        colorScheme === 'dark' && styles.textInputDark,
-                    ]}
-                    placeholder="Paste YouTube URL here"
-                    placeholderTextColor={colorScheme === 'dark' ? '#ccc' : '#999'}
-                    value={youtubeUrl}
-                    onChangeText={setYoutubeUrl}
-                />
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[
+                styles.textInput,
+                colorScheme === 'dark' && styles.textInputDark,
+              ]}
+              placeholder="Paste YouTube URL here"
+              placeholderTextColor={colorScheme === 'dark' ? '#ccc' : '#999'}
+              value={youtubeUrl}
+              onChangeText={setYoutubeUrl}
+            />
 
-                <Pressable
-                     style={({ pressed }) => [
-                              {
-                                  backgroundColor: pressed ? '#005bb5' : '#0078d4',
-                              },
-                              styles.goButton,
-                          ]}
-                          onPress={() => getYoutubeEmbedUrl(youtubeUrl)}
-                      >
-                          <Text style={styles.goButtonText}>Go</Text>
-                      </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                {
+                  backgroundColor: pressed ? '#005bb5' : '#0078d4',
+                },
+                styles.goButton,
+              ]}
+              onPress={() => getYoutubeEmbedUrl(youtubeUrl)}
+            >
+              <Text style={styles.goButtonText}>Go</Text>
+            </Pressable>
+          </View>
 
-
-            </View>
-
-
-          {/* Video Player */}
           <View style={styles.videoContainer}>
             <WebView
               style={styles.webview}
-                source={{ uri: embedUrl }}
-
-
+              source={{ uri: embedUrl }}
               javaScriptEnabled={true}
             />
-            {/* Media Controls */}
-            <View style={styles.mediaControls}>
-              <Icon name="play" size={24} color="#fff" />
-              <Icon name="skip-forward" size={24} color="#fff" />
-              <Icon name="volume-high" size={24} color="#fff" />
-              <View style={styles.spacer} />
-              <Text style={styles.ccButton}>CC</Text>
-              <Icon name="fullscreen" size={24} color="#fff" />
-            </View>
+      
           </View>
 
-          {/* Lyrics Display */}
           <View style={styles.lyricsContainer}>
             <Text style={styles.lyricsText}>Twinkle, twinkle, little star...</Text>
-            <Icon name="microphone" size={32} color="#000" />
+            <SvgXml xml={microphoneSvg} width={32} height={32} />
           </View>
         </View>
 
-        {/* Right Panel */}
         <View style={styles.rightPanel}>
           <View style={styles.difficultyContainer}>
             <Text style={styles.sectionTitle}>Difficulty</Text>
@@ -180,13 +156,13 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0', // Windows 10 background color
+    backgroundColor: '#f0f0f0',
   },
   titleBar: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#e6e6e6', // Windows 10 title bar color
+    backgroundColor: '#e6e6e6',
     borderBottomWidth: 1,
     borderBottomColor: '#d1d1d1',
   },
@@ -208,7 +184,7 @@ const styles = StyleSheet.create({
   },
   sidebar: {
     width: 250,
-    backgroundColor: '#fafafa', // Windows 10 sidebar color
+    backgroundColor: '#fafafa',
     borderRightWidth: 1,
     borderRightColor: '#d1d1d1',
     padding: 16,
@@ -224,21 +200,21 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   playlistItemSelected: {
-    backgroundColor: '#e1e1e1', // Windows 10 selected item color
+    backgroundColor: '#e1e1e1',
   },
   playlistItemText: {
     fontSize: 14,
     color: '#000',
   },
   playlistItemTextSelected: {
-    color: '#0078d4', // Windows 10 accent color
+    color: '#0078d4',
   },
   mainContent: {
     flex: 1,
     padding: 16,
   },
   scoreContainer: {
-    backgroundColor: '#e1f0ff', // Light blue background
+    backgroundColor: '#e1f0ff',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -247,14 +223,14 @@ const styles = StyleSheet.create({
   scoreText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#0078d4', // Windows 10 accent color
+    color: '#0078d4',
   },
   videoContainer: {
     aspectRatio: 16 / 9,
     backgroundColor: '#000',
     borderRadius: 8,
     overflow: 'hidden',
-      marginBottom: 16,
+    marginBottom: 16,
     marginLeft: 24,
   },
   webview: {
@@ -285,12 +261,12 @@ const styles = StyleSheet.create({
   },
   lyricsText: {
     fontSize: 24,
-    color: '#0078d4', // Windows 10 accent color
+    color: '#0078d4',
   },
   rightPanel: {
     width: 200,
     padding: 16,
-    backgroundColor: '#fafafa', // Windows 10 sidebar color
+    backgroundColor: '#fafafa',
     borderLeftWidth: 1,
     borderLeftColor: '#d1d1d1',
   },
@@ -313,7 +289,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   button: {
-    backgroundColor: '#e1e1e1', // Windows 10 button color
+    backgroundColor: '#e1e1e1',
     padding: 12,
     borderRadius: 4,
     alignItems: 'center',
@@ -325,46 +301,42 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   submitButton: {
-    backgroundColor: '#0078d4', // Windows 10 accent color
+    backgroundColor: '#0078d4',
   },
   submitButtonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '500',
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    textInput: {
-        flex: 1,
-        height: 40,
-        borderColor: '#d1d1d1',
-        borderWidth: 1,
-        borderRadius: 4,
-        paddingHorizontal: 8,
-        paddingVertical: 8,
-        marginRight: 8,
-        textAlignVertical: 'center',
-    },
-    goButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 4,
-    },
-    goButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    textInputDark: {
-        backgroundColor: '#333',
-        color: '#fff',
-    },
-
-
-
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  textInput: {
+    flex: 1,
+    height: 40,
+    borderColor: '#d1d1d1',
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    marginRight: 8,
+    textAlignVertical: 'center',
+  },
+  goButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 4,
+  },
+  goButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  textInputDark: {
+    backgroundColor: '#333',
+    color: '#fff',
+  },
 });
-
