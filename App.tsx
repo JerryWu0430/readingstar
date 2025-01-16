@@ -56,7 +56,7 @@ export default function App() {
         <Text style={styles.titleText}>Reading Star</Text>
         <SvgXml xml={starSvg} width={20} height={20} />
         <View style={styles.titleBarRight}>
-          <Text>user.edu.uk</Text>
+          <Text style={styles.emailText}> jerry.wu.23@ucl.ac.uk</Text>
           <SvgXml xml={accountSvg} width={24} height={24} />
         </View>
       </View>
@@ -110,6 +110,7 @@ export default function App() {
                   backgroundColor: pressed ? '#005bb5' : '#0078d4',
                 },
                 styles.goButton,
+                pressed && { backgroundColor: '#005bb5' },
               ]}
               onPress={() => getYoutubeEmbedUrl(youtubeUrl)}
             >
@@ -140,11 +141,29 @@ export default function App() {
             <Text style={[styles.difficultyOption, { color: '#dc2626' }]}>Hard</Text>
           </View>
 
-          <Pressable style={styles.button}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              pressed && { backgroundColor: '#005bb5' }, 
+            ]}
+            onPress={() => {
+              //test audio button logic
+            }}
+          >
             <Text style={styles.buttonText}>Test Audio</Text>
           </Pressable>
+          
 
-          <Pressable style={[styles.button, styles.submitButton]}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              styles.submitButton,
+              pressed && { backgroundColor: '#005bb5' }, 
+            ]}
+            onPress={() => {
+              // submit button logic
+            }}
+          >
             <Text style={styles.submitButtonText}>Submit</Text>
           </Pressable>
         </View>
@@ -156,27 +175,39 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#f8f9fa',
   },
   titleBar: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#e6e6e6',
+    backgroundColor: '#e0e0e0', // Bright background for header
     borderBottomWidth: 1,
-    borderBottomColor: '#d1d1d1',
+    borderBottomColor: '#c0c0c0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    elevation: 2,
   },
   titleText: {
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 12,
     marginRight: 8,
+    color: '#333',
+  },
+  emailText: {
+    fontSize: 13,
+    marginLeft: 12,
+    marginRight: 8,
+    color: '#333',
   },
   titleBarRight: {
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: 'auto',
     gap: 12,
+    color: '#333',
   },
   content: {
     flex: 1,
@@ -184,46 +215,54 @@ const styles = StyleSheet.create({
   },
   sidebar: {
     width: 250,
-    backgroundColor: '#fafafa',
+    backgroundColor: '#ffffff',
     borderRightWidth: 1,
-    borderRightColor: '#d1d1d1',
+    borderRightColor: '#dcdcdc',
     padding: 16,
   },
   playlistTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#000',
+    color: '#444',
   },
   playlistItem: {
     padding: 8,
     borderRadius: 4,
+    marginBottom: 4,
   },
   playlistItemSelected: {
-    backgroundColor: '#e1e1e1',
+    backgroundColor: '#e8f4ff',
   },
   playlistItemText: {
     fontSize: 14,
-    color: '#000',
+    color: '#333',
   },
   playlistItemTextSelected: {
-    color: '#0078d4',
+    color: '#333',
+    fontWeight: 'bold',
   },
   mainContent: {
     flex: 1,
     padding: 16,
   },
   scoreContainer: {
-    backgroundColor: '#e1f0ff',
+    backgroundColor: '#e8f4ff',
     padding: 16,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#dcdcdc',
     alignItems: 'center',
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    elevation: 3,
   },
   scoreText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#0078d4',
+    color: '#005bb5',
   },
   videoContainer: {
     aspectRatio: 16 / 9,
@@ -244,16 +283,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
     gap: 16,
   },
   spacer: {
     flex: 1,
-  },
-  ccButton: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   lyricsContainer: {
     alignItems: 'center',
@@ -261,44 +295,57 @@ const styles = StyleSheet.create({
   },
   lyricsText: {
     fontSize: 24,
-    color: '#0078d4',
+    color: '#005bb5',
   },
   rightPanel: {
     width: 200,
     padding: 16,
-    backgroundColor: '#fafafa',
+    backgroundColor: '#ffffff',
     borderLeftWidth: 1,
-    borderLeftColor: '#d1d1d1',
+    borderLeftColor: '#dcdcdc',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    elevation: 3,
   },
   difficultyContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#f9f9f9',
     padding: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d1d1',
+    borderColor: '#dcdcdc',
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: '#000',
+    color: '#444',
   },
   difficultyOption: {
     fontSize: 14,
     marginVertical: 4,
   },
   button: {
-    backgroundColor: '#e1e1e1',
+    backgroundColor: '#0078d4',
     padding: 12,
     borderRadius: 4,
     alignItems: 'center',
     marginBottom: 8,
+    
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    elevation: 2,
   },
   buttonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000',
+    color: '#fff',
   },
   submitButton: {
     backgroundColor: '#0078d4',
@@ -323,11 +370,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginRight: 8,
     textAlignVertical: 'center',
+
   },
   goButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 4,
+    backgroundColor: '#0078d4',
   },
   goButtonText: {
     color: '#fff',
@@ -336,7 +385,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   textInputDark: {
-    backgroundColor: '#333',
-    color: '#fff',
+    backgroundColor: '#fff',
+    color: '#444',
   },
 });
