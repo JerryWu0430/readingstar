@@ -17,7 +17,7 @@ from notebook_utils import device_widget
 nncf.set_log_level(logging.ERROR)
 
 # Define model ID and path
-model_id = "openai/whisper-tiny"
+model_id = "openai/whisper-tiny.en"
 model_path = Path(model_id.split("/")[1])
 
 # Convert the model using OpenVINO tools
