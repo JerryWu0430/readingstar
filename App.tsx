@@ -9,11 +9,26 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import WebView from 'react-native-webview';
+import { TextInput } from 'react-native';
+import { Button } from 'react-native';
+import { useColorScheme } from 'react-native';
+
+
+
+
+
 
 export default function App() {
   const [score, setScore] = useState(550);
   const [selectedSong, setSelectedSong] = useState('Twinkle, Twinkle...');
   const [difficulty, setDifficulty] = useState('Easy');
+    const [youtubeUrl, setYoutubeUrl] = useState('');
+    const [embedUrl, setEmbedUrl] = useState('');
+    const colorScheme = useColorScheme();
+
+
+
+
 
   const playlist = [
     'Humpty Dumpty',
@@ -26,7 +41,17 @@ export default function App() {
     'Song #2',
     'Song #3',
     'Song #4'
-  ];
+    ];
+
+    const getYoutubeEmbedUrl = (url) => {
+        const videoId = url.split('v=')[1];
+        const ampersandPosition = videoId ? videoId.indexOf('&') : -1;
+        const finalVideoId = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
+        setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}`);
+    };
+
+
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -73,13 +98,43 @@ export default function App() {
           {/* Score Display */}
           <View style={styles.scoreContainer}>
             <Text style={styles.scoreText}>Score: {score}</Text>
-          </View>
+                  </View>
+
+            <View style={styles.inputContainer}>
+                <TextInput
+                    style={[
+                        styles.textInput,
+                        colorScheme === 'dark' && styles.textInputDark,
+                    ]}
+                    placeholder="Paste YouTube URL here"
+                    placeholderTextColor={colorScheme === 'dark' ? '#ccc' : '#999'}
+                    value={youtubeUrl}
+                    onChangeText={setYoutubeUrl}
+                />
+
+                <Pressable
+                     style={({ pressed }) => [
+                              {
+                                  backgroundColor: pressed ? '#005bb5' : '#0078d4',
+                              },
+                              styles.goButton,
+                          ]}
+                          onPress={() => getYoutubeEmbedUrl(youtubeUrl)}
+                      >
+                          <Text style={styles.goButtonText}>Go</Text>
+                      </Pressable>
+
+
+            </View>
+
 
           {/* Video Player */}
           <View style={styles.videoContainer}>
             <WebView
               style={styles.webview}
-              source={{ uri: 'about:blank' }} // Replace with actual YouTube embed
+                source={{ uri: embedUrl }}
+
+
               javaScriptEnabled={true}
             />
             {/* Media Controls */}
@@ -199,7 +254,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     borderRadius: 8,
     overflow: 'hidden',
-    marginBottom: 16,
+      marginBottom: 16,
+    marginLeft: 24,
   },
   webview: {
     flex: 1,
@@ -275,6 +331,40 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '500',
-  },
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    textInput: {
+        flex: 1,
+        height: 40,
+        borderColor: '#d1d1d1',
+        borderWidth: 1,
+        borderRadius: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 8,
+        marginRight: 8,
+        textAlignVertical: 'center',
+    },
+    goButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 4,
+    },
+    goButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    textInputDark: {
+        backgroundColor: '#333',
+        color: '#fff',
+    },
+
+
+
 });
 
