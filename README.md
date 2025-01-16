@@ -6,7 +6,9 @@ Run these commands to initalize and install dependencies
 >`npx react-native run-windows`
 
 
-
-
 Run this everytime you want to build
+
+This is for the codegen error: `$env:SKIP_CODEGEN_WINDOWS = "true"`
+
+
 `npx react-native run-windows`
