@@ -121,6 +121,14 @@
     <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Image Include="Assets\StoreLogo.png" />
     <Image Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Image Include="Assets\Icons\account.svg" />
+    <Image Include="Assets\Icons\fullscreen.svg" />
+    <Image Include="Assets\Icons\menu.svg" />
+    <Image Include="Assets\Icons\microphone.svg" />
+    <Image Include="Assets\Icons\play.svg" />
+    <Image Include="Assets\Icons\skip-forward.svg" />
+    <Image Include="Assets\Icons\star.svg" />
+    <Image Include="Assets\Icons\volume-high.svg" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MainPage.cpp">
