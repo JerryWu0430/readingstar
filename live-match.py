@@ -53,7 +53,7 @@ def find_closest_match(transcription, lyrics):
 # Audio recording setup
 energy_threshold = 1000
 record_timeout = 2.0
-phrase_timeout = 4.0
+phrase_timeout = 3.0
 phrase_time = None
 data_queue = Queue()
 recorder = sr.Recognizer()
