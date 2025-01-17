@@ -12,6 +12,7 @@ import {
 import WebView from 'react-native-webview';
 import { SvgXml } from 'react-native-svg';
 import { parseString } from 'react-native-xml2js';
+import he from 'he';
 
 const menuSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>`;
 const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2.5L8.42,8.06L2,9.74L6.2,14.88L5.82,21.5L12,19.09L18.18,21.5L17.8,14.88L22,9.74L15.58,8.06L12,2.5M9.38,10.5C10,10.5 10.5,11 10.5,11.63A1.12,1.12 0 0,1 9.38,12.75C8.75,12.75 8.25,12.25 8.25,11.63C8.25,11 8.75,10.5 9.38,10.5M14.63,10.5C15.25,10.5 15.75,11 15.75,11.63A1.12,1.12 0 0,1 14.63,12.75C14,12.75 13.5,12.25 13.5,11.63C13.5,11 14,10.5 14.63,10.5M9,15H15C14.5,16.21 13.31,17 12,17C10.69,17 9.5,16.21 9,15Z" /></svg>`;
@@ -29,6 +30,7 @@ export default function App() {
     const [startTime, setStartTime] = useState(null);
     const colorScheme = useColorScheme();
     const timerRef = useRef(null);
+    const offset = 3; // 3 second offset
 
     const playlist = [
         'Humpty Dumpty',
@@ -75,11 +77,9 @@ export default function App() {
                         return;
                     }
                     const lyricsArray = result.transcript.text.map((item: any) => ({
-                        lyric: item._,
+                        lyric: he.decode(item._),
                         time: parseFloat(item.$.start),
                     }));
-
-                    console.log(lyricsArray);
                     setLyrics(lyricsArray);
                 });
             }
@@ -91,7 +91,7 @@ export default function App() {
     useEffect(() => {
         if (startTime) {
             timerRef.current = setInterval(() => {
-                const elapsedTime = (Date.now() - startTime) / 1000;
+                const elapsedTime = (Date.now() - startTime) / 1000 - offset;
                 const currentLyric = lyrics.reduce((prev, curr) => (curr.time <= elapsedTime ? curr : prev), { lyric: '' }).lyric;
                 setCurrentLyric(currentLyric);
             }, 1000);
@@ -444,4 +444,5 @@ const styles = StyleSheet.create({
         color: '#444',
     },
 });
+
 
