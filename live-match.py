@@ -16,6 +16,7 @@ from notebook_utils import device_widget
 # Set logging level
 nncf.set_log_level(logging.ERROR)
 
+'''
 # Define model ID and path
 model_id = "openai/whisper-tiny.en"
 model_path = Path(model_id.split("/")[1])
@@ -23,10 +24,11 @@ model_path = Path(model_id.split("/")[1])
 # Convert the model using OpenVINO tools
 optimum_cli(model_id, model_path)
 print(f"✅ {model_id} model converted and can be found in {model_path}")
-
+'''
 # Select device
 device = device_widget(default="CPU", exclude=["NPU"])
 
+model_path = "whisper-tiny-en-openvino"
 # Initialize OpenVINO pipeline
 ov_pipe = ov_genai.WhisperPipeline(str(model_path), device=device.value)
 
