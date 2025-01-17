@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  StyleSheet,
-  SafeAreaView,
-  TextInput,
-  useColorScheme,
+    View,
+    Text,
+    ScrollView,
+    Pressable,
+    StyleSheet,
+    SafeAreaView,
+    TextInput,
+    useColorScheme,
 } from 'react-native';
 import WebView from 'react-native-webview';
 import { SvgXml } from 'react-native-svg';
+import { parseString } from 'react-native-xml2js';
+
+
 
 const menuSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>`;
 const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2.5L8.42,8.06L2,9.74L6.2,14.88L5.82,21.5L12,19.09L18.18,21.5L17.8,14.88L22,9.74L15.58,8.06L12,2.5M9.38,10.5C10,10.5 10.5,11 10.5,11.63A1.12,1.12 0 0,1 9.38,12.75C8.75,12.75 8.25,12.25 8.25,11.63C8.25,11 8.75,10.5 9.38,10.5M14.63,10.5C15.25,10.5 15.75,11 15.75,11.63A1.12,1.12 0 0,1 14.63,12.75C14,12.75 13.5,12.25 13.5,11.63C13.5,11 14,10.5 14.63,10.5M9,15H15C14.5,16.21 13.31,17 12,17C10.69,17 9.5,16.21 9,15Z" /></svg>`;
@@ -18,374 +21,410 @@ const accountSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" /></svg>`;
 
 export default function App() {
-  const [score, setScore] = useState(550);
-  const [selectedSong, setSelectedSong] = useState('Twinkle, Twinkle...');
-  const [difficulty, setDifficulty] = useState('Easy');
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [embedUrl, setEmbedUrl] = useState('');
-  const colorScheme = useColorScheme();
+    const [score, setScore] = useState(550);
+    const [selectedSong, setSelectedSong] = useState('Twinkle, Twinkle...');
+    const [difficulty, setDifficulty] = useState('Easy');
+    const [youtubeUrl, setYoutubeUrl] = useState('');
+    const [embedUrl, setEmbedUrl] = useState('');
+    const [lyrics, setLyrics] = useState('');
+    const colorScheme = useColorScheme();
 
-  const playlist = [
-    'Humpty Dumpty',
-    'The Hokey Pokey',
-    'Looby Loo',
-    'Twinkle, Twinkle...',
-    'Apples and Bananas',
-    'Hush Little Baby',
-    'Song #1',
-    'Song #2',
-    'Song #3',
-    'Song #4',
-  ];
+    const playlist = [
+        'Humpty Dumpty',
+        'The Hokey Pokey',
+        'Looby Loo',
+        'Twinkle, Twinkle...',
+        'Apples and Bananas',
+        'Hush Little Baby',
+        'Song #1',
+        'Song #2',
+        'Song #3',
+        'Song #4',
+    ];
 
-  interface YoutubeUrl {
-    url: string;
-  }
+    interface YoutubeUrl {
+        url: string;
+    }
 
-  const getYoutubeEmbedUrl = (url: string): void => {
-    const videoId: string | undefined = url.split('v=')[1];
-    const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
-    const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
-    setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}`);
-  };
+    const getYoutubeEmbedUrl = (url: string): void => {
+        const videoId: string | undefined = url.split('v=')[1];
+        const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
+        const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
+        setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}`);
+        fetchYoutubeSubtitles(url);
+    };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.titleBar}>
-        <SvgXml xml={menuSvg} width={24} height={24} />
-        <Text style={styles.titleText}>Reading Star</Text>
-        <SvgXml xml={starSvg} width={20} height={20} />
-        <View style={styles.titleBarRight}>
-          <Text style={styles.emailText}> jerry.wu.23@ucl.ac.uk</Text>
-          <SvgXml xml={accountSvg} width={24} height={24} />
-        </View>
-      </View>
+    const fetchYoutubeSubtitles = async (url: string) => {
+        try {
+            const response = await fetch(url);
+            const html = await response.text();
+            const timedTextIndex = html.indexOf('timedtext');
+            if (timedTextIndex !== -1) {
+                const startIndex = html.lastIndexOf('"', timedTextIndex) + 1;
+                const endIndex = html.indexOf('"', timedTextIndex);
+                let subtitleUrl = html.substring(startIndex, endIndex);
+                subtitleUrl = subtitleUrl.replace(/\\u0026/g, '&');
+                const subtitleResponse = await fetch(subtitleUrl);
+                const subtitleText = await subtitleResponse.text();
 
-      <View style={styles.content}>
-        <View style={styles.sidebar}>
-          <Text style={styles.playlistTitle}>Playlist #1</Text>
-          <ScrollView>
-            {playlist.map((song, index) => (
-              <Pressable
-                key={index}
-                style={[
-                  styles.playlistItem,
-                  song === selectedSong && styles.playlistItemSelected,
-                ]}
-                onPress={() => setSelectedSong(song)}
-              >
-                <Text
-                  style={[
-                    styles.playlistItemText,
-                    song === selectedSong && styles.playlistItemTextSelected,
-                  ]}
-                >
-                  {song}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
+                parseString(subtitleText, (err, result) => {
+                    if (err) {
+                        console.error('Error parsing XML:', err);
+                        return;
+                    }
+                    const lyricsArray = result.transcript.text.map((item: any) => ({
+                        lyric: item._,
+                        time: parseFloat(item.$.start),
+                    }));
 
-        <View style={styles.mainContent}>
-          <View style={styles.scoreContainer}>
-            <Text style={styles.scoreText}>Score: {score}</Text>
-          </View>
+                    console.log(lyricsArray);
+                    setLyrics(JSON.stringify(lyricsArray, null, 2));
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching subtitles:', error);
+        }
+    };
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={[
-                styles.textInput,
-                colorScheme === 'dark' && styles.textInputDark,
-              ]}
-              placeholder="Paste YouTube URL here"
-              placeholderTextColor={colorScheme === 'dark' ? '#ccc' : '#999'}
-              value={youtubeUrl}
-              onChangeText={setYoutubeUrl}
-            />
 
-            <Pressable
-              style={({ pressed }) => [
-                {
-                  backgroundColor: pressed ? '#005bb5' : '#0078d4',
-                },
-                styles.goButton,
-                pressed && { backgroundColor: '#005bb5' },
-              ]}
-              onPress={() => getYoutubeEmbedUrl(youtubeUrl)}
-            >
-              <Text style={styles.goButtonText}>Go</Text>
-            </Pressable>
-          </View>
 
-          <View style={styles.videoContainer}>
-            <WebView
-              style={styles.webview}
-              source={{ uri: embedUrl }}
-              javaScriptEnabled={true}
-            />
-      
-          </View>
 
-          <View style={styles.lyricsContainer}>
-            <Text style={styles.lyricsText}>Twinkle, twinkle, little star...</Text>
-            <SvgXml xml={microphoneSvg} width={32} height={32} />
-          </View>
-        </View>
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={styles.titleBar}>
+                <SvgXml xml={menuSvg} width={24} height={24} />
+                <Text style={styles.titleText}>Reading Star</Text>
+                <SvgXml xml={starSvg} width={20} height={20} />
+                <View style={styles.titleBarRight}>
+                    <Text style={styles.emailText}> jerry.wu.23@ucl.ac.uk</Text>
+                    <SvgXml xml={accountSvg} width={24} height={24} />
+                </View>
+            </View>
 
-        <View style={styles.rightPanel}>
-          <View style={styles.difficultyContainer}>
-            <Text style={styles.sectionTitle}>Difficulty</Text>
-            <Text style={[styles.difficultyOption, { color: '#22c55e' }]}>Easy</Text>
-            <Text style={[styles.difficultyOption, { color: '#f97316' }]}>Medium</Text>
-            <Text style={[styles.difficultyOption, { color: '#dc2626' }]}>Hard</Text>
-          </View>
+            <View style={styles.content}>
+                <View style={styles.sidebar}>
+                    <Text style={styles.playlistTitle}>Playlist #1</Text>
+                    <ScrollView>
+                        {playlist.map((song, index) => (
+                            <Pressable
+                                key={index}
+                                style={[
+                                    styles.playlistItem,
+                                    song === selectedSong && styles.playlistItemSelected,
+                                ]}
+                                onPress={() => setSelectedSong(song)}
+                            >
+                                <Text
+                                    style={[
+                                        styles.playlistItemText,
+                                        song === selectedSong && styles.playlistItemTextSelected,
+                                    ]}
+                                >
+                                    {song}
+                                </Text>
+                            </Pressable>
+                        ))}
+                    </ScrollView>
+                </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              pressed && { backgroundColor: '#005bb5' }, 
-            ]}
-            onPress={() => {
-              //test audio button logic
-            }}
-          >
-            <Text style={styles.buttonText}>Test Audio</Text>
-          </Pressable>
-          
+                <View style={styles.mainContent}>
+                    <View style={styles.scoreContainer}>
+                        <Text style={styles.scoreText}>Score: {score}</Text>
+                    </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              styles.submitButton,
-              pressed && { backgroundColor: '#005bb5' }, 
-            ]}
-            onPress={() => {
-              // submit button logic
-            }}
-          >
-            <Text style={styles.submitButtonText}>Submit</Text>
-          </Pressable>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={[
+                                styles.textInput,
+                                colorScheme === 'dark' && styles.textInputDark,
+                            ]}
+                            placeholder="Paste YouTube URL here"
+                            placeholderTextColor={colorScheme === 'dark' ? '#ccc' : '#999'}
+                            value={youtubeUrl}
+                            onChangeText={setYoutubeUrl}
+                        />
+
+                        <Pressable
+                            style={({ pressed }) => [
+                                {
+                                    backgroundColor: pressed ? '#005bb5' : '#0078d4',
+                                },
+                                styles.goButton,
+                                pressed && { backgroundColor: '#005bb5' },
+                            ]}
+                            onPress={() => getYoutubeEmbedUrl(youtubeUrl)}
+                        >
+                            <Text style={styles.goButtonText}>Go</Text>
+                        </Pressable>
+                    </View>
+
+                    <View style={styles.videoContainer}>
+                        <WebView
+                            style={styles.webview}
+                            source={{ uri: embedUrl }}
+                            javaScriptEnabled={true}
+                        />
+                    </View>
+
+                    <View style={styles.lyricsContainer}>
+                        <Text style={styles.lyricsText}>{lyrics}</Text>
+                        <SvgXml xml={microphoneSvg} width={32} height={32} />
+                    </View>
+                </View>
+
+                <View style={styles.rightPanel}>
+                    <View style={styles.difficultyContainer}>
+                        <Text style={styles.sectionTitle}>Difficulty</Text>
+                        <Text style={[styles.difficultyOption, { color: '#22c55e' }]}>Easy</Text>
+                        <Text style={[styles.difficultyOption, { color: '#f97316' }]}>Medium</Text>
+                        <Text style={[styles.difficultyOption, { color: '#dc2626' }]}>Hard</Text>
+                    </View>
+
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.button,
+                            pressed && { backgroundColor: '#005bb5' },
+                        ]}
+                        onPress={() => {
+                            //test audio button logic
+                        }}
+                    >
+                        <Text style={styles.buttonText}>Test Audio</Text>
+                    </Pressable>
+
+
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.button,
+                            styles.submitButton,
+                            pressed && { backgroundColor: '#005bb5' },
+                        ]}
+                        onPress={() => {
+                            // submit button logic
+                        }}
+                    >
+                        <Text style={styles.submitButtonText}>Submit</Text>
+                    </Pressable>
+                </View>
+            </View>
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  titleBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#e0e0e0', // Bright background for header
-    borderBottomWidth: 1,
-    borderBottomColor: '#c0c0c0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    elevation: 2,
-  },
-  titleText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 12,
-    marginRight: 8,
-    color: '#333',
-  },
-  emailText: {
-    fontSize: 13,
-    marginLeft: 12,
-    marginRight: 8,
-    color: '#333',
-  },
-  titleBarRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 'auto',
-    gap: 12,
-    color: '#333',
-  },
-  content: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  sidebar: {
-    width: 250,
-    backgroundColor: '#ffffff',
-    borderRightWidth: 1,
-    borderRightColor: '#dcdcdc',
-    padding: 16,
-  },
-  playlistTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#444',
-  },
-  playlistItem: {
-    padding: 8,
-    borderRadius: 4,
-    marginBottom: 4,
-  },
-  playlistItemSelected: {
-    backgroundColor: '#e8f4ff',
-  },
-  playlistItemText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  playlistItemTextSelected: {
-    color: '#333',
-    fontWeight: 'bold',
-  },
-  mainContent: {
-    flex: 1,
-    padding: 16,
-  },
-  scoreContainer: {
-    backgroundColor: '#e8f4ff',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#dcdcdc',
-    alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    elevation: 3,
-  },
-  scoreText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#005bb5',
-  },
-  videoContainer: {
-    aspectRatio: 16 / 9,
-    backgroundColor: '#000',
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 16,
-    marginLeft: 24,
-  },
-  webview: {
-    flex: 1,
-  },
-  mediaControls: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    gap: 16,
-  },
-  spacer: {
-    flex: 1,
-  },
-  lyricsContainer: {
-    alignItems: 'center',
-    gap: 16,
-  },
-  lyricsText: {
-    fontSize: 24,
-    color: '#005bb5',
-  },
-  rightPanel: {
-    width: 200,
-    padding: 16,
-    backgroundColor: '#ffffff',
-    borderLeftWidth: 1,
-    borderLeftColor: '#dcdcdc',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    elevation: 3,
-  },
-  difficultyContainer: {
-    backgroundColor: '#f9f9f9',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#dcdcdc',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    elevation: 2,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#444',
-  },
-  difficultyOption: {
-    fontSize: 14,
-    marginVertical: 4,
-  },
-  button: {
-    backgroundColor: '#0078d4',
-    padding: 12,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginBottom: 8,
-    
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    elevation: 2,
-  },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#fff',
-  },
-  submitButton: {
-    backgroundColor: '#0078d4',
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  textInput: {
-    flex: 1,
-    height: 40,
-    borderColor: '#d1d1d1',
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    marginRight: 8,
-    textAlignVertical: 'center',
+    container: {
+        flex: 1,
+        backgroundColor: '#f8f9fa',
+    },
+    titleBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: '#e0e0e0', // Bright background for header
+        borderBottomWidth: 1,
+        borderBottomColor: '#c0c0c0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        elevation: 2,
+    },
+    titleText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginLeft: 12,
+        marginRight: 8,
+        color: '#333',
+    },
+    emailText: {
+        fontSize: 13,
+        marginLeft: 12,
+        marginRight: 8,
+        color: '#333',
+    },
+    titleBarRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 'auto',
+        gap: 12,
+        color: '#333',
+    },
+    content: {
+        flex: 1,
+        flexDirection: 'row',
+    },
+    sidebar: {
+        width: 250,
+        backgroundColor: '#ffffff',
+        borderRightWidth: 1,
+        borderRightColor: '#dcdcdc',
+        padding: 16,
+    },
+    playlistTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 16,
+        color: '#444',
+    },
+    playlistItem: {
+        padding: 8,
+        borderRadius: 4,
+        marginBottom: 4,
+    },
+    playlistItemSelected: {
+        backgroundColor: '#e8f4ff',
+    },
+    playlistItemText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    playlistItemTextSelected: {
+        color: '#333',
+        fontWeight: 'bold',
+    },
+    mainContent: {
+        flex: 1,
+        padding: 16,
+    },
+    scoreContainer: {
+        backgroundColor: '#e8f4ff',
+        padding: 16,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#dcdcdc',
+        alignItems: 'center',
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        elevation: 3,
+    },
+    scoreText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#005bb5',
+    },
+    videoContainer: {
+        aspectRatio: 16 / 9,
+        backgroundColor: '#000',
+        borderRadius: 8,
+        overflow: 'hidden',
+        marginBottom: 16,
+        marginLeft: 24,
+    },
+    webview: {
+        flex: 1,
+    },
+    mediaControls: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        gap: 16,
+    },
+    spacer: {
+        flex: 1,
+    },
+    lyricsContainer: {
+        alignItems: 'center',
+        gap: 16,
+    },
+    lyricsText: {
+        fontSize: 24,
+        color: '#005bb5',
+    },
+    rightPanel: {
+        width: 200,
+        padding: 16,
+        backgroundColor: '#ffffff',
+        borderLeftWidth: 1,
+        borderLeftColor: '#dcdcdc',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        elevation: 3,
+    },
+    difficultyContainer: {
+        backgroundColor: '#f9f9f9',
+        padding: 16,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#dcdcdc',
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        elevation: 2,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 8,
+        color: '#444',
+    },
+    difficultyOption: {
+        fontSize: 14,
+        marginVertical: 4,
+    },
+    button: {
+        backgroundColor: '#0078d4',
+        padding: 12,
+        borderRadius: 4,
+        alignItems: 'center',
+        marginBottom: 8,
 
-  },
-  goButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 4,
-    backgroundColor: '#0078d4',
-  },
-  goButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  textInputDark: {
-    backgroundColor: '#fff',
-    color: '#444',
-  },
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        elevation: 2,
+    },
+    buttonText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#fff',
+    },
+    submitButton: {
+        backgroundColor: '#0078d4',
+    },
+    submitButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    textInput: {
+        flex: 1,
+        height: 40,
+        borderColor: '#d1d1d1',
+        borderWidth: 1,
+        borderRadius: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 8,
+        marginRight: 8,
+        textAlignVertical: 'center',
+
+    },
+    goButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 4,
+        backgroundColor: '#0078d4',
+    },
+    goButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    textInputDark: {
+        backgroundColor: '#fff',
+        color: '#444',
+    },
 });
