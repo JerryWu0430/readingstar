@@ -31,6 +31,8 @@ export default function App() {
     const colorScheme = useColorScheme();
     const timerRef = useRef(null);
     const offset = 3; // 3 second offset
+    const [showStar, setShowStar] = useState(false); 
+
 
     const playlist = [
         'Humpty Dumpty',
@@ -57,6 +59,28 @@ export default function App() {
         fetchYoutubeSubtitles(url);
         setStartTime(Date.now());
     };
+
+    const startMatching = async () => {
+        try {
+            const response = await fetch('http://localhost:8000/match', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ lyrics }),
+            });
+    
+            const result = await response.json();
+    
+            if (result.matched) {
+                setShowStar(true);
+                setTimeout(() => setShowStar(false), 3000);
+            }
+        } catch (error) {
+            console.error('Error matching lyrics:', error);
+        }
+    };
+    
 
     const fetchYoutubeSubtitles = async (url: string) => {
         try {
@@ -94,6 +118,7 @@ export default function App() {
                 const elapsedTime = (Date.now() - startTime) / 1000 - offset;
                 const currentLyric = lyrics.reduce((prev, curr) => (curr.time <= elapsedTime ? curr : prev), { lyric: '' }).lyric;
                 setCurrentLyric(currentLyric);
+                startMatching();
             }, 1000);
 
             return () => clearInterval(timerRef.current);
@@ -110,6 +135,18 @@ export default function App() {
                     <Text style={styles.emailText}> jerry.wu.23@ucl.ac.uk</Text>
                     <SvgXml xml={accountSvg} width={24} height={24} />
                 </View>
+            </View>
+
+            
+            <View style={[styles.starContainer, {marginTop: 280, marginLeft: 220}]}>
+                {showStar && ( // Conditionally render the star
+                        <SvgXml
+                        xml={starSvg.replace('fill="#000000"', 'fill="#FFD700"')} // Sets the fill color to yellow
+                        width={100}
+                        height={100}
+                        style={styles.star}
+                    />
+                )}
             </View>
 
             <View style={styles.content}>
@@ -442,6 +479,16 @@ const styles = StyleSheet.create({
     textInputDark: {
         backgroundColor: '#fff',
         color: '#444',
+    },
+    starContainer: {
+        position: 'absolute', // Position the star overlay
+        top: '50%',
+        left: '50%',
+        transform: [{ translateX: -50 }, { translateY: -50 }], // Center the star
+        zIndex: 10, // Ensure it's above other components
+    },
+    star: {
+        opacity: 1, // Optional styling for animation
     },
 });
 

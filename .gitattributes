@@ -1,1 +1,2 @@
 whisper-tiny-en-openvino/* filter=lfs diff=lfs merge=lfs -text
+whisper-tiny-en-openvino filter=lfs diff=lfs merge=lfs -text
