@@ -4,14 +4,11 @@ import numpy as np
 import openvino_genai as ov_genai
 import speech_recognition as sr
 
-from pathlib import Path
-from cmd_helper import optimum_cli
 from datetime import datetime, timedelta
 from queue import Queue
 from time import sleep
 from difflib import SequenceMatcher
 from transformers.utils import logging
-from notebook_utils import device_widget
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -23,12 +20,9 @@ app = FastAPI()
 # Set logging level
 nncf.set_log_level(logging.ERROR)
 
-# Select device
-device = device_widget(default="CPU", exclude=["NPU"])
-
 model_path = "whisper-tiny-en-openvino"
 # Initialize OpenVINO pipeline
-ov_pipe = ov_genai.WhisperPipeline(str(model_path), device=device.value)
+ov_pipe = ov_genai.WhisperPipeline(str(model_path), device="CPU")
 
 # Known lyrics and matching function remain the same
 lyrics = {
