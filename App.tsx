@@ -60,27 +60,37 @@ export default function App() {
         setStartTime(Date.now());
     };
 
-    const startMatching = async () => {
+    const startMatching = async (lyric : string) => {
         try {
-            const response = await fetch('http://localhost:8000/match', {
-                method: 'GET',
+                await fetch('http://localhost:8000/update_lyric', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ lyrics }),
+                body: JSON.stringify({ lyric }),
             });
-    
-            const result = await response.json();
-    
-            if (result.matched) {
+        } catch (error) {
+            console.error('Error starting phrase matching:', error);
+        }
+    };
+
+    const checkMatch = async () => {
+        try {
+            // Call GET /match to check if the server matched the current lyric
+            const response = await fetch("http://localhost:8000/match", {
+                method: "GET",
+            });
+            const result = await response.text(); // Expecting "yes" or "no"
+
+            if (result === "yes") {
                 setShowStar(true);
                 setTimeout(() => setShowStar(false), 3000);
             }
         } catch (error) {
-            console.error('Error matching lyrics:', error);
+            console.error("Error checking the match:", error);
         }
     };
-    
+
 
     const fetchYoutubeSubtitles = async (url: string) => {
         try {
@@ -112,13 +122,15 @@ export default function App() {
         }
     };
 
+
     useEffect(() => {
         if (startTime) {
-            timerRef.current = setInterval(() => {
+            timerRef.current = setInterval(async () => {
                 const elapsedTime = (Date.now() - startTime) / 1000 - offset;
                 const currentLyric = lyrics.reduce((prev, curr) => (curr.time <= elapsedTime ? curr : prev), { lyric: '' }).lyric;
                 setCurrentLyric(currentLyric);
-                startMatching();
+                await startMatching(currentLyric);
+                await checkMatch();
             }, 1000);
 
             return () => clearInterval(timerRef.current);
