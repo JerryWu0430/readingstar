@@ -83,8 +83,6 @@ def process_audio():
         while True:
             now = datetime.utcnow()
             if not data_queue.empty():
-                if phrase_time and now - phrase_time > timedelta(seconds=phrase_timeout):
-                    phrase_complete = True
                 phrase_time = now
                 audio_data = b''.join(data_queue.queue)
                 data_queue.queue.clear()
