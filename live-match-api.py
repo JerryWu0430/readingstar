@@ -28,7 +28,11 @@ recorder.dynamic_energy_threshold = True
 
 # Shared variables
 global current_verse
+global prev_verse
+global prev_prev_verse
+prev_verse = ""  # The previous lyric phrase
 current_verse = ""  # The current lyric phrase
+prev_prev_verse = ""  # The lyric phrase before the previous one
 data_queue = Queue()
 current_match = {"text": None, "similarity": 0.0}
 source = sr.Microphone(sample_rate=16000)
@@ -90,7 +94,9 @@ def update_lyric(phrase: Phrase):
     """
     Update the current lyric phrase and run the transcription process.
     """
-    global current_verse
+    global current_verse, prev_verse, prev_prev_verse
+    prev_prev_verse = prev_verse
+    prev_verse = current_verse
     current_verse = phrase.lyric
     print(f"Updated current lyric to: '{current_verse}'")
 
@@ -105,11 +111,12 @@ def get_match():
     """
     Get the current transcription match.
     """
-    global current_verse
+    global current_verse, prev_verse, prev_prev_verse
     global recognized_text
-    similarity = SequenceMatcher(None, recognized_text, current_verse).ratio()
-    print(f"Current verse: {current_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
-    if similarity > 0.5:
+    similarity = SequenceMatcher(None, recognized_text, prev_prev_verse).ratio()
+    similarty_curr = SequenceMatcher(None, recognized_text, prev_verse).ratio()
+    print(f"Last verse: {prev_prev_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
+    if (similarity > 0.5 or similarty_curr > 0.5) and recognized_text != "":
         return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})
     return JSONResponse(content={"match": "no", "similarity": current_match["similarity"]})
 

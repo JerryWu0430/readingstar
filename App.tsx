@@ -103,9 +103,9 @@ export default function App() {
             const response = await fetch("http://localhost:8000/match", {
                 method: "GET",
             });
-            const result = await response.text(); // Expecting "yes" or "no"
+            const result = await response.json(); // Expecting "yes" or "no"
 
-            if (result === "yes") {
+            if (result.match === "yes") {
                 setShowStar(true);
                 setTimeout(() => setShowStar(false), 3000);
             }
@@ -186,7 +186,7 @@ export default function App() {
             </View>
 
             
-            <View style={[styles.starContainer, {marginTop: 280, marginLeft: 220}]}>
+            <View style={[styles.starContainer, {marginTop: 280, marginLeft: 300}]}>
                 {showStar && ( // Conditionally render the star
                         <SvgXml
                         xml={starSvg.replace('fill="#000000"', 'fill="#FFD700"')} // Sets the fill color to yellow
