@@ -1,9 +1,21 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+import logging
+import nncf
+import numpy as np
+import openvino_genai as ov_genai
+import speech_recognition as sr
+
 from datetime import datetime, timedelta
 from queue import Queue
 from difflib import SequenceMatcher
+
+from transformers.utils import logging
+import uvicorn
+
+import threading
+from contextlib import asynccontextmanager
 import numpy as np
 import openvino_genai as ov_genai
 import speech_recognition as sr
