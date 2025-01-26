@@ -51,6 +51,29 @@ export default function App() {
         url: string;
     }
 
+    useEffect(() => {
+        const startTranscription = async () => {
+            try {
+                const response = await fetch('http://localhost:8000/transcribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                console.log('Transcription started');
+            } catch (error) {
+                console.error('Failed to start transcription:', error);
+            }
+        };
+    
+        startTranscription();
+    }, []); 
+
     const getYoutubeEmbedUrl = (url: string): void => {
         const videoId: string | undefined = url.split('v=')[1];
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
@@ -122,20 +145,33 @@ export default function App() {
         }
     };
 
-
+    const previousLyricRef = useRef(''); 
+    
     useEffect(() => {
         if (startTime) {
+            
             timerRef.current = setInterval(async () => {
                 const elapsedTime = (Date.now() - startTime) / 1000 - offset;
-                const currentLyric = lyrics.reduce((prev, curr) => (curr.time <= elapsedTime ? curr : prev), { lyric: '' }).lyric;
-                setCurrentLyric(currentLyric);
-                await startMatching(currentLyric);
-                await checkMatch();
+    
+                // Find the current lyric based on elapsed time
+                const currentLyric = lyrics.reduce(
+                    (prev, curr) => (curr.time <= elapsedTime ? curr : prev),
+                    { lyric: '' }
+                ).lyric;
+    
+                // Only update and call startMatching if the lyric has changed
+                if (currentLyric !== previousLyricRef.current) {
+                    previousLyricRef.current = currentLyric; // Update previous lyric
+                    setCurrentLyric(currentLyric); // Update state
+                    await startMatching(currentLyric); // Call startMatching
+                }
+    
+                await checkMatch(); // Check for matches (runs regardless)
             }, 1000);
-
+    
             return () => clearInterval(timerRef.current);
         }
-    }, [startTime, lyrics]);
+    }, [startTime, lyrics, offset]);
 
     return (
         <SafeAreaView style={styles.container}>
