@@ -127,6 +127,28 @@ export default function App() {
                 const endIndex = html.indexOf('"', timedTextIndex);
                 let subtitleUrl = html.substring(startIndex, endIndex);
                 subtitleUrl = subtitleUrl.replace(/\\u0026/g, '&');
+
+                const langIndex = subtitleUrl.indexOf('&lang=');
+                if (langIndex === -1) {
+                    // No language parameter, add it
+                    subtitleUrl += '&lang=en';
+                } else {
+                    // Check if not already English
+                    const langStart = langIndex + 6;
+                    const langEnd = subtitleUrl.indexOf('&', langStart);
+                    const currentLang = langEnd === -1 
+                        ? subtitleUrl.substring(langStart)
+                        : subtitleUrl.substring(langStart, langEnd);
+                        
+                    if (currentLang !== 'en') {
+                        const prefix = subtitleUrl.substring(0, langStart);
+                        const suffix = langEnd === -1 
+                            ? '' 
+                            : subtitleUrl.substring(langEnd);
+                        subtitleUrl = prefix + 'en' + suffix;
+                    }
+                }
+
                 const subtitleResponse = await fetch(subtitleUrl);
                 const subtitleText = await subtitleResponse.text();
 
@@ -406,9 +428,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#000',
         borderRadius: 8,
         overflow: 'hidden',
-        marginBottom: 16,
-        marginLeft: 24,
         position: 'relative',
+        maxWidth: 800,  // Add fixed max width
+        maxHeight: 450, // Add fixed max height
+        width: '100%',  // Take available width up to max
+        alignSelf: 'center',
     },
     webview: {
         flex: 1,
