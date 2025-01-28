@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from queue import Queue
 from difflib import SequenceMatcher
 
-from transformers.utils import logging
 import uvicorn
 
 import threading
@@ -19,14 +18,13 @@ from contextlib import asynccontextmanager
 import numpy as np
 import openvino_genai as ov_genai
 import speech_recognition as sr
-from notebook_utils import device_widget
 import uvicorn
 from time import sleep
 
 # Set up OpenVINO and device
-device = device_widget(default="CPU", exclude=["NPU"])
+device = "CPU"
 model_path = "whisper-tiny-en-openvino"
-ov_pipe = ov_genai.WhisperPipeline(str(model_path), device=device.value)
+ov_pipe = ov_genai.WhisperPipeline(str(model_path), device="CPU")
 
 # Audio recording setup
 energy_threshold = 500
@@ -85,8 +83,6 @@ def process_audio():
         while True:
             now = datetime.utcnow()
             if not data_queue.empty():
-                if phrase_time and now - phrase_time > timedelta(seconds=phrase_timeout):
-                    phrase_complete = True
                 phrase_time = now
                 audio_data = b''.join(data_queue.queue)
                 data_queue.queue.clear()
