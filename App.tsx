@@ -15,7 +15,9 @@ import { parseString } from 'react-native-xml2js';
 import he from 'he';
 
 const menuSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>`;
-const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2.5L8.42,8.06L2,9.74L6.2,14.88L5.82,21.5L12,19.09L18.18,21.5L17.8,14.88L22,9.74L15.58,8.06L12,2.5M9.38,10.5C10,10.5 10.5,11 10.5,11.63A1.12,1.12 0 0,1 9.38,12.75C8.75,12.75 8.25,12.25 8.25,11.63C8.25,11 8.75,10.5 9.38,10.5M14.63,10.5C15.25,10.5 15.75,11 15.75,11.63A1.12,1.12 0 0,1 14.63,12.75C14,12.75 13.5,12.25 13.5,11.63C13.5,11 14,10.5 14.63,10.5M9,15H15C14.5,16.21 13.31,17 12,17C10.69,17 9.5,16.21 9,15Z" /></svg>`;
+const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path fill="#FFD700" d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
+</svg>`;
 const accountSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6,17C6,15 10,13.9 12,13.9C14,13.9 18,15 18,17V18H6M15,9A3,3 0 0,1 12,12A3,3 0 0,1 9,9A3,3 0 0,1 12,6A3,3 0 0,1 15,9M3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3H5C3.89,3 3,3.9 3,5Z" /></svg>`;
 const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" /></svg>`;
 
@@ -31,6 +33,8 @@ export default function App() {
     const colorScheme = useColorScheme();
     const timerRef = useRef(null);
     const offset = 3; // 3 second offset
+    const [showStar, setShowStar] = useState(false); 
+
 
     const playlist = [
         'Humpty Dumpty',
@@ -49,6 +53,29 @@ export default function App() {
         url: string;
     }
 
+    useEffect(() => {
+        const startTranscription = async () => {
+            try {
+                const response = await fetch('http://localhost:8000/transcribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                console.log('Transcription started');
+            } catch (error) {
+                console.error('Failed to start transcription:', error);
+            }
+        };
+    
+        startTranscription();
+    }, []); 
+
     const getYoutubeEmbedUrl = (url: string): void => {
         const videoId: string | undefined = url.split('v=')[1];
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
@@ -57,6 +84,38 @@ export default function App() {
         fetchYoutubeSubtitles(url);
         setStartTime(Date.now());
     };
+
+    const startMatching = async (lyric : string) => {
+        try {
+                await fetch('http://localhost:8000/update_lyric', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ lyric }),
+            });
+        } catch (error) {
+            console.error('Error starting phrase matching:', error);
+        }
+    };
+
+    const checkMatch = async () => {
+        try {
+            // Call GET /match to check if the server matched the current lyric
+            const response = await fetch("http://localhost:8000/match", {
+                method: "GET",
+            });
+            const result = await response.json(); // Expecting "yes" or "no"
+
+            if (result.match === "yes") {
+                setShowStar(true);
+                setTimeout(() => setShowStar(false), 3000);
+            }
+        } catch (error) {
+            console.error("Error checking the match:", error);
+        }
+    };
+
 
     const fetchYoutubeSubtitles = async (url: string) => {
         try {
@@ -68,6 +127,28 @@ export default function App() {
                 const endIndex = html.indexOf('"', timedTextIndex);
                 let subtitleUrl = html.substring(startIndex, endIndex);
                 subtitleUrl = subtitleUrl.replace(/\\u0026/g, '&');
+
+                const langIndex = subtitleUrl.indexOf('&lang=');
+                if (langIndex === -1) {
+                    // No language parameter, add it
+                    subtitleUrl += '&lang=en';
+                } else {
+                    // Check if not already English
+                    const langStart = langIndex + 6;
+                    const langEnd = subtitleUrl.indexOf('&', langStart);
+                    const currentLang = langEnd === -1 
+                        ? subtitleUrl.substring(langStart)
+                        : subtitleUrl.substring(langStart, langEnd);
+                        
+                    if (currentLang !== 'en') {
+                        const prefix = subtitleUrl.substring(0, langStart);
+                        const suffix = langEnd === -1 
+                            ? '' 
+                            : subtitleUrl.substring(langEnd);
+                        subtitleUrl = prefix + 'en' + suffix;
+                    }
+                }
+
                 const subtitleResponse = await fetch(subtitleUrl);
                 const subtitleText = await subtitleResponse.text();
 
@@ -88,17 +169,33 @@ export default function App() {
         }
     };
 
+    const previousLyricRef = useRef(''); 
+    
     useEffect(() => {
         if (startTime) {
-            timerRef.current = setInterval(() => {
+            
+            timerRef.current = setInterval(async () => {
                 const elapsedTime = (Date.now() - startTime) / 1000 - offset;
-                const currentLyric = lyrics.reduce((prev, curr) => (curr.time <= elapsedTime ? curr : prev), { lyric: '' }).lyric;
-                setCurrentLyric(currentLyric);
+    
+                // Find the current lyric based on elapsed time
+                const currentLyric = lyrics.reduce(
+                    (prev, curr) => (curr.time <= elapsedTime ? curr : prev),
+                    { lyric: '' }
+                ).lyric;
+    
+                // Only update and call startMatching if the lyric has changed
+                if (currentLyric !== previousLyricRef.current) {
+                    previousLyricRef.current = currentLyric; // Update previous lyric
+                    setCurrentLyric(currentLyric); // Update state
+                    await startMatching(currentLyric); // Call startMatching
+                }
+    
+                await checkMatch(); // Check for matches (runs regardless)
             }, 1000);
-
+    
             return () => clearInterval(timerRef.current);
         }
-    }, [startTime, lyrics]);
+    }, [startTime, lyrics, offset]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -110,6 +207,18 @@ export default function App() {
                     <Text style={styles.emailText}> jerry.wu.23@ucl.ac.uk</Text>
                     <SvgXml xml={accountSvg} width={24} height={24} />
                 </View>
+            </View>
+
+            
+            <View style={[styles.starContainer, {marginTop: 280, marginLeft: 300}]}>
+                {showStar && ( // Conditionally render the star
+                        <SvgXml
+                        xml={starSvg.replace('fill="#000000"', 'fill="#FFD700"')} // Sets the fill color to yellow
+                        width={100}
+                        height={100}
+                        style={styles.star}
+                    />
+                )}
             </View>
 
             <View style={styles.content}>
@@ -319,9 +428,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#000',
         borderRadius: 8,
         overflow: 'hidden',
-        marginBottom: 16,
-        marginLeft: 24,
         position: 'relative',
+        maxWidth: 800,  // Add fixed max width
+        maxHeight: 450, // Add fixed max height
+        width: '100%',  // Take available width up to max
+        alignSelf: 'center',
     },
     webview: {
         flex: 1,
@@ -442,6 +553,16 @@ const styles = StyleSheet.create({
     textInputDark: {
         backgroundColor: '#fff',
         color: '#444',
+    },
+    starContainer: {
+        position: 'absolute', // Position the star overlay
+        top: '50%',
+        left: '50%',
+        transform: [{ translateX: -50 }, { translateY: -50 }], // Center the star
+        zIndex: 10, // Ensure it's above other components
+    },
+    star: {
+        opacity: 1, // Optional styling for animation
     },
 });
 
