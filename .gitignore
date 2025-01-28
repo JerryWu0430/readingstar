@@ -2,7 +2,7 @@
 #
 .DS_Store
 
-whisper-tiny-en-openvino/
+whisper-tiny-en-openvino/*
 # Xcode
 #
 build/
