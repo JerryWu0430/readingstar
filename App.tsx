@@ -30,13 +30,12 @@ export default function App() {
     const [lyrics, setLyrics] = useState([]);
     const [currentLyric, setCurrentLyric] = useState('');
     const [startTime, setStartTime] = useState(null);
+    const [songTitle, setSongTitle] = useState('');
     const colorScheme = useColorScheme();
     const timerRef = useRef(null);
     const offset = 3; // 3 second offset
-    const [showStar, setShowStar] = useState(false); 
-
-
-    const playlist = [
+    const [showStar, setShowStar] = useState(false);
+    const [playlist, setPlaylist] = useState<string[]>([
         'Humpty Dumpty',
         'The Hokey Pokey',
         'Looby Loo',
@@ -47,7 +46,7 @@ export default function App() {
         'Song #2',
         'Song #3',
         'Song #4',
-    ];
+    ]);
 
     interface YoutubeUrl {
         url: string;
@@ -81,6 +80,7 @@ export default function App() {
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
         setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}?autoplay=1&controls=0`);
+        getSongTitle(url);
         fetchYoutubeSubtitles(url);
         setStartTime(Date.now());
     };
@@ -116,6 +116,28 @@ export default function App() {
         }
     };
 
+    const getSongTitle = async (url : string) => {
+        try {
+            const response = await fetch(url);
+            const html = await response.text();
+            const titleIndex = html.indexOf('<title>');
+            const titleEndIndex = html.indexOf('</title>');
+            const title = html.substring(titleIndex+7, titleEndIndex);
+            const titleUrlTuple = [title, url];
+            console.log(title);
+
+            setSongTitle(title);
+            setPlaylist([...playlist]);
+            setSelectedSong(title);
+        } catch (error) {
+            console.error('Error fetching song title:', error);
+        }
+    };
+
+    useEffect(() => {
+        // This effect will run whenever the playlist state changes
+        console.log('Playlist updated:', playlist);
+    }, [playlist]);
 
     const fetchYoutubeSubtitles = async (url: string) => {
         try {
