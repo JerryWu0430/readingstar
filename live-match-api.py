@@ -1,30 +1,20 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import logging
-import nncf
-import numpy as np
-import openvino_genai as ov_genai
-import speech_recognition as sr
-
 from datetime import datetime, timedelta
 from queue import Queue
 from difflib import SequenceMatcher
-
-import uvicorn
-
-import threading
-from contextlib import asynccontextmanager
 import numpy as np
 import openvino_genai as ov_genai
 import speech_recognition as sr
+from notebook_utils import device_widget
 import uvicorn
 from time import sleep
 
 # Set up OpenVINO and device
-device = "CPU"
+device = device_widget(default="CPU", exclude=["NPU"])
 model_path = "whisper-tiny-en-openvino"
-ov_pipe = ov_genai.WhisperPipeline(str(model_path), device="CPU")
+ov_pipe = ov_genai.WhisperPipeline(str(model_path), device=device.value)
 
 # Audio recording setup
 energy_threshold = 500
@@ -83,6 +73,8 @@ def process_audio():
         while True:
             now = datetime.utcnow()
             if not data_queue.empty():
+                if phrase_time and now - phrase_time > timedelta(seconds=phrase_timeout):
+                    phrase_complete = True
                 phrase_time = now
                 audio_data = b''.join(data_queue.queue)
                 data_queue.queue.clear()
@@ -121,10 +113,18 @@ def get_match():
     """
     global current_verse, prev_verse, prev_prev_verse
     global recognized_text
-    similarity = SequenceMatcher(None, recognized_text, prev_prev_verse).ratio()
-    similarty_curr = SequenceMatcher(None, recognized_text, prev_verse).ratio()
-    print(f"Last verse: {prev_prev_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
-    if (similarity > 0.5 or similarty_curr > 0.5) and recognized_text != "":
+    similarity_prev_prev = SequenceMatcher(None, recognized_text, prev_prev_verse).ratio()
+    similarty_prev = SequenceMatcher(None, recognized_text, prev_verse).ratio()
+    similarity_curr = SequenceMatcher(None, recognized_text, current_verse).ratio()
+    similarities = [
+        #(similarity_prev_prev, prev_prev_verse)
+        (similarty_prev, prev_verse),
+        (similarity_curr, current_verse)
+    ]
+
+    similarity, similarity_verse = max(similarities, key=lambda x: x[0])
+    if (similarity > 0.5) and recognized_text != "":
+        print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
         return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})
     return JSONResponse(content={"match": "no", "similarity": current_match["similarity"]})
 
