@@ -22,7 +22,8 @@ const accountSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" /></svg>`;
 
 export default function App() {
-    const [score, setScore] = useState(550);
+
+    const [score, setScore] = useState(0);
     const [selectedSong, setSelectedSong] = useState('Twinkle, Twinkle...');
     const [difficulty, setDifficulty] = useState('Easy');
     const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -218,6 +219,12 @@ export default function App() {
             return () => clearInterval(timerRef.current);
         }
     }, [startTime, lyrics, offset]);
+
+    useEffect(() => {
+        if (showStar) {
+            setScore(prevScore => prevScore + 100);
+        }
+    }, [showStar]);
 
     return (
         <SafeAreaView style={styles.container}>

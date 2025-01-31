@@ -113,10 +113,18 @@ def get_match():
     """
     global current_verse, prev_verse, prev_prev_verse
     global recognized_text
-    similarity = SequenceMatcher(None, recognized_text, prev_prev_verse).ratio()
-    similarty_curr = SequenceMatcher(None, recognized_text, prev_verse).ratio()
-    print(f"Last verse: {prev_prev_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
-    if (similarity > 0.5 or similarty_curr > 0.5) and recognized_text != "":
+    similarity_prev_prev = SequenceMatcher(None, recognized_text, prev_prev_verse).ratio()
+    similarty_prev = SequenceMatcher(None, recognized_text, prev_verse).ratio()
+    similarity_curr = SequenceMatcher(None, recognized_text, current_verse).ratio()
+    similarities = [
+        #(similarity_prev_prev, prev_prev_verse)
+        (similarty_prev, prev_verse),
+        (similarity_curr, current_verse)
+    ]
+
+    similarity, similarity_verse = max(similarities, key=lambda x: x[0])
+    if (similarity > 0.5) and recognized_text != "":
+        print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
         return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})
     return JSONResponse(content={"match": "no", "similarity": current_match["similarity"]})
 
