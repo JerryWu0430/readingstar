@@ -36,17 +36,13 @@ export default function App() {
     const timerRef = useRef(null);
     const offset = 3; // 3 second offset
     const [showStar, setShowStar] = useState(false);
-    const [playlist, setPlaylist] = useState<string[]>([
-        'Humpty Dumpty',
-        'The Hokey Pokey',
-        'Looby Loo',
-        'Twinkle, Twinkle...',
-        'Apples and Bananas',
-        'Hush Little Baby',
-        'Song #1',
-        'Song #2',
-        'Song #3',
-        'Song #4',
+    const [playlist, setPlaylist] = useState<string[][]>([
+        ['Humpty Dumpty', 'https://www.youtube.com/watch?v=nrv495corBc'],
+        ['The Hokey Cokey', 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'],
+        ['Looby Loo', 'https://www.youtube.com/watch?v=EHaoEKcuX0g'],
+        ['Twinkle, Twinkle...', 'https://www.youtube.com/watch?v=yCjJyiqpAuU'],
+        ['Apples and Bananas', 'https://www.youtube.com/watch?v=r5WLXZspD1M'],
+        ['Hush Little Baby', 'https://www.youtube.com/watch?v=f_raDpgx_3M'],
     ]);
 
     interface YoutubeUrl {
@@ -119,21 +115,38 @@ export default function App() {
 
     const getSongTitle = async (url : string) => {
         try {
-            const response = await fetch(url);
-            const html = await response.text();
-            const titleIndex = html.indexOf('<title>');
-            const titleEndIndex = html.indexOf('</title>');
-            const title = html.substring(titleIndex+7, titleEndIndex);
-            const titleUrlTuple = [title, url];
-            console.log(title);
+            let title = playlist.find((item) => item[1] === url)?.[0] ?? '';
+            // if url not in playlist, fetch song title
+            if (!title) {
+                console.log('Fetching song title...');
+                const response = await fetch(url);
+                const html = await response.text();
+                const titleIndex = html.indexOf('<title>');
+                const titleEndIndex = html.indexOf('</title>');
+                title = html.substring(titleIndex+7, titleEndIndex);
+                if (title.includes('YouTube')) {
+                    title = title.substring(0, title.indexOf(' - YouTube'));
+                }
+                const titleUrlTuple = [title, url];
+                setPlaylist([...playlist, titleUrlTuple]);
+            }
 
+            console.log('Loading song:', title);
             setSongTitle(title);
-            setPlaylist([...playlist]);
             setSelectedSong(title);
         } catch (error) {
             console.error('Error fetching song title:', error);
         }
     };
+
+    const playFromPlaylist = async (song: string) => {
+        setSelectedSong(song);
+        const songUrl = playlist.find((item) => item[0] === song)[1];
+        if (songUrl) {
+            setYoutubeUrl(songUrl);
+            getYoutubeEmbedUrl(songUrl);
+        }
+    }
 
     useEffect(() => {
         // This effect will run whenever the playlist state changes
@@ -259,17 +272,17 @@ export default function App() {
                                 key={index}
                                 style={[
                                     styles.playlistItem,
-                                    song === selectedSong && styles.playlistItemSelected,
+                                    song[0] === selectedSong && styles.playlistItemSelected,
                                 ]}
-                                onPress={() => setSelectedSong(song)}
+                                onPress={() => playFromPlaylist(song[0])}
                             >
                                 <Text
                                     style={[
                                         styles.playlistItemText,
-                                        song === selectedSong && styles.playlistItemTextSelected,
+                                        song[0] === selectedSong && styles.playlistItemTextSelected,
                                     ]}
                                 >
-                                    {song}
+                                    {song[0]}
                                 </Text>
                             </Pressable>
                         ))}
