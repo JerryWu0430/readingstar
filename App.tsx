@@ -321,12 +321,22 @@ export default function App() {
                     </View>
 
                     <View style={styles.videoContainer}>
-                        <WebView
-                            style={styles.webview}
-                            source={{ uri: embedUrl }}
-                            javaScriptEnabled={true}
-                        />
-                        <View style={styles.overlay} />
+                        {youtubeUrl ? (
+                            <WebView
+                                style={styles.webview}
+                                source={{ uri: embedUrl }}
+                                javaScriptEnabled={true}
+                            />
+                        ) : (
+                            <View style={styles.overlay}>
+                                <Text style={
+                                    {
+                                        fontSize: 20,
+                                        textAlign: 'center',
+                                    }
+                                } >Click the sidebar or enter a YouTube link to start!</Text>
+                            </View>
+                        )}
                     </View>
 
                     <View style={styles.lyricsContainer}>
@@ -482,6 +492,7 @@ const styles = StyleSheet.create({
     overlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'transparent',
+        justifyContent: 'center',
     },
     mediaControls: {
         position: 'absolute',
