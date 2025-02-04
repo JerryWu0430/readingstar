@@ -337,6 +337,7 @@ export default function App() {
                                 } >Click the sidebar or enter a YouTube link to start!</Text>
                             </View>
                         )}
+                        <View style={styles.overlay}/>
                     </View>
 
                     <View style={styles.lyricsContainer}>
