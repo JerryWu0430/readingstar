@@ -24,31 +24,26 @@ const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 2
 export default function App() {
 
     const [score, setScore] = useState(0);
-    const [selectedSong, setSelectedSong] = useState('Twinkle, Twinkle...');
+    const [selectedSong, setSelectedSong] = useState('');
     const [difficulty, setDifficulty] = useState('Easy');
     const [youtubeUrl, setYoutubeUrl] = useState('');
     const [embedUrl, setEmbedUrl] = useState('');
     const [lyrics, setLyrics] = useState([]);
     const [currentLyric, setCurrentLyric] = useState('');
     const [startTime, setStartTime] = useState(null);
+    const [songTitle, setSongTitle] = useState('');
     const colorScheme = useColorScheme();
     const timerRef = useRef(null);
     const offset = 3; // 3 second offset
-    const [showStar, setShowStar] = useState(false); 
-
-
-    const playlist = [
-        'Humpty Dumpty',
-        'The Hokey Pokey',
-        'Looby Loo',
-        'Twinkle, Twinkle...',
-        'Apples and Bananas',
-        'Hush Little Baby',
-        'Song #1',
-        'Song #2',
-        'Song #3',
-        'Song #4',
-    ];
+    const [showStar, setShowStar] = useState(false);
+    const [playlist, setPlaylist] = useState<string[][]>([
+        ['Humpty Dumpty', 'https://www.youtube.com/watch?v=nrv495corBc'],
+        ['The Hokey Cokey', 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'],
+        ['Looby Loo', 'https://www.youtube.com/watch?v=EHaoEKcuX0g'],
+        ['Twinkle, Twinkle...', 'https://www.youtube.com/watch?v=yCjJyiqpAuU'],
+        ['Apples and Bananas', 'https://www.youtube.com/watch?v=r5WLXZspD1M'],
+        ['Hush Little Baby', 'https://www.youtube.com/watch?v=f_raDpgx_3M'],
+    ]);
 
     interface YoutubeUrl {
         url: string;
@@ -82,6 +77,7 @@ export default function App() {
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
         setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}?autoplay=1&controls=0`);
+        getSongTitle(url);
         fetchYoutubeSubtitles(url);
         setStartTime(Date.now());
     };
@@ -117,6 +113,45 @@ export default function App() {
         }
     };
 
+    const getSongTitle = async (url : string) => {
+        try {
+            let title = playlist.find((item) => item[1] === url)?.[0] ?? '';
+            // if url not in playlist, fetch song title
+            if (!title) {
+                console.log('Fetching song title...');
+                const response = await fetch(url);
+                const html = await response.text();
+                const titleIndex = html.indexOf('<title>');
+                const titleEndIndex = html.indexOf('</title>');
+                title = html.substring(titleIndex+7, titleEndIndex);
+                if (title.includes('YouTube')) {
+                    title = title.substring(0, title.indexOf(' - YouTube'));
+                }
+                const titleUrlTuple = [title, url];
+                setPlaylist([...playlist, titleUrlTuple]);
+            }
+
+            console.log('Loading song:', title);
+            setSongTitle(title);
+            setSelectedSong(title);
+        } catch (error) {
+            console.error('Error fetching song title:', error);
+        }
+    };
+
+    const playFromPlaylist = async (song: string) => {
+        setSelectedSong(song);
+        const songUrl = playlist.find((item) => item[0] === song)[1];
+        if (songUrl) {
+            setYoutubeUrl(songUrl);
+            getYoutubeEmbedUrl(songUrl);
+        }
+    }
+
+    useEffect(() => {
+        // This effect will run whenever the playlist state changes
+        console.log('Playlist updated:', playlist);
+    }, [playlist]);
 
     const fetchYoutubeSubtitles = async (url: string) => {
         try {
@@ -237,17 +272,17 @@ export default function App() {
                                 key={index}
                                 style={[
                                     styles.playlistItem,
-                                    song === selectedSong && styles.playlistItemSelected,
+                                    song[0] === selectedSong && styles.playlistItemSelected,
                                 ]}
-                                onPress={() => setSelectedSong(song)}
+                                onPress={() => playFromPlaylist(song[0])}
                             >
                                 <Text
                                     style={[
                                         styles.playlistItemText,
-                                        song === selectedSong && styles.playlistItemTextSelected,
+                                        song[0] === selectedSong && styles.playlistItemTextSelected,
                                     ]}
                                 >
-                                    {song}
+                                    {song[0]}
                                 </Text>
                             </Pressable>
                         ))}
@@ -286,12 +321,23 @@ export default function App() {
                     </View>
 
                     <View style={styles.videoContainer}>
-                        <WebView
-                            style={styles.webview}
-                            source={{ uri: embedUrl }}
-                            javaScriptEnabled={true}
-                        />
-                        <View style={styles.overlay} />
+                        {youtubeUrl ? (
+                            <WebView
+                                style={styles.webview}
+                                source={{ uri: embedUrl }}
+                                javaScriptEnabled={true}
+                            />
+                        ) : (
+                            <View style={styles.overlay}>
+                                <Text style={
+                                    {
+                                        fontSize: 20,
+                                        textAlign: 'center',
+                                    }
+                                } >Click the sidebar or enter a YouTube link to start!</Text>
+                            </View>
+                        )}
+                        <View style={styles.overlay}/>
                     </View>
 
                     <View style={styles.lyricsContainer}>
@@ -447,6 +493,7 @@ const styles = StyleSheet.create({
     overlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'transparent',
+        justifyContent: 'center',
     },
     mediaControls: {
         position: 'absolute',
