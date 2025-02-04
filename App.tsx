@@ -24,7 +24,7 @@ const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 2
 export default function App() {
 
     const [score, setScore] = useState(0);
-    const [selectedSong, setSelectedSong] = useState('Twinkle, Twinkle...');
+    const [selectedSong, setSelectedSong] = useState('');
     const [difficulty, setDifficulty] = useState('Easy');
     const [youtubeUrl, setYoutubeUrl] = useState('');
     const [embedUrl, setEmbedUrl] = useState('');
