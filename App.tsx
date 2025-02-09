@@ -209,7 +209,6 @@ export default function App() {
     useEffect(() => {
         if (currentTime) {
             const elapsedTime = currentTime;
-            console.log('Elapsed Time:', elapsedTime);
 
             // Find the current lyric based on elapsed time
             const currentLyric = lyrics.reduce(
@@ -217,8 +216,6 @@ export default function App() {
                 { lyric: '' }
             ).lyric;
 
-            console.log('Current Lyric:', currentLyric);
-            console.log('Previous Lyric:', previousLyricRef.current);
 
             // Only update and call startMatching if the lyric has changed
             if (currentLyric !== previousLyricRef.current) {
@@ -377,8 +374,6 @@ export default function App() {
                                 javaScriptEnabled={true}
                                 onMessage={(event) => {
                                     const currentTime = JSON.parse(event.nativeEvent.data);
-                                    console.log('Current Time:', currentTime);
-
                                     setCurrentTime(currentTime);
                                 }}
                             />
