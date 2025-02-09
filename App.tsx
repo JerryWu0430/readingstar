@@ -30,11 +30,11 @@ export default function App() {
     const [embedUrl, setEmbedUrl] = useState('');
     const [lyrics, setLyrics] = useState([]);
     const [currentLyric, setCurrentLyric] = useState('');
-    const [startTime, setStartTime] = useState(null);
+    const [inputUrl, setInputUrl] = useState('');
+    const [currentTime, setCurrentTime] = useState(0);
     const [songTitle, setSongTitle] = useState('');
     const colorScheme = useColorScheme();
     const timerRef = useRef(null);
-    const offset = 3; // 3 second offset
     const [showStar, setShowStar] = useState(false);
     const [playlist, setPlaylist] = useState<string[][]>([
         ['Humpty Dumpty', 'https://www.youtube.com/watch?v=nrv495corBc'],
@@ -79,7 +79,6 @@ export default function App() {
         setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}?autoplay=1&controls=0`);
         getSongTitle(url);
         fetchYoutubeSubtitles(url);
-        setStartTime(Date.now());
     };
 
     const startMatching = async (lyric : string) => {
@@ -208,30 +207,28 @@ export default function App() {
     const previousLyricRef = useRef(''); 
     
     useEffect(() => {
-        if (startTime) {
-            
-            timerRef.current = setInterval(async () => {
-                const elapsedTime = (Date.now() - startTime) / 1000 - offset;
-    
-                // Find the current lyric based on elapsed time
-                const currentLyric = lyrics.reduce(
-                    (prev, curr) => (curr.time <= elapsedTime ? curr : prev),
-                    { lyric: '' }
-                ).lyric;
-    
-                // Only update and call startMatching if the lyric has changed
-                if (currentLyric !== previousLyricRef.current) {
-                    previousLyricRef.current = currentLyric; // Update previous lyric
-                    setCurrentLyric(currentLyric); // Update state
-                    await startMatching(currentLyric); // Call startMatching
-                }
-    
-                await checkMatch(); // Check for matches (runs regardless)
-            }, 1000);
-    
-            return () => clearInterval(timerRef.current);
+        if (currentTime) {
+            const elapsedTime = currentTime;
+
+            // Find the current lyric based on elapsed time
+            const currentLyric = lyrics.reduce(
+                (prev, curr) => (curr.time <= elapsedTime ? curr : prev),
+                { lyric: '' }
+            ).lyric;
+
+
+            // Only update and call startMatching if the lyric has changed
+            if (currentLyric !== previousLyricRef.current) {
+                console.log('Updating Lyric:', currentLyric);
+                previousLyricRef.current = currentLyric; // Update previous lyric
+                setCurrentLyric(currentLyric); // Update state
+                startMatching(currentLyric); // Call startMatching
+            }
+
+            checkMatch(); // Check for matches (runs regardless)
         }
-    }, [startTime, lyrics, offset]);
+    }, [currentTime, lyrics]);
+
 
     useEffect(() => {
         if (showStar) {
@@ -295,6 +292,7 @@ export default function App() {
                     </View>
 
                     <View style={styles.inputContainer}>
+
                         <TextInput
                             style={[
                                 styles.textInput,
@@ -302,8 +300,8 @@ export default function App() {
                             ]}
                             placeholder="Paste YouTube URL here"
                             placeholderTextColor={colorScheme === 'dark' ? '#ccc' : '#999'}
-                            value={youtubeUrl}
-                            onChangeText={setYoutubeUrl}
+                            value={inputUrl}
+                            onChangeText={setInputUrl}
                         />
 
                         <Pressable
@@ -314,31 +312,83 @@ export default function App() {
                                 styles.goButton,
                                 pressed && { backgroundColor: '#005bb5' },
                             ]}
-                            onPress={() => getYoutubeEmbedUrl(youtubeUrl)}
+                            onPress={() => {
+                                setYoutubeUrl(inputUrl);
+                                getYoutubeEmbedUrl(inputUrl);
+                            }}
                         >
                             <Text style={styles.goButtonText}>Go</Text>
                         </Pressable>
+
                     </View>
 
                     <View style={styles.videoContainer}>
                         {youtubeUrl ? (
                             <WebView
                                 style={styles.webview}
-                                source={{ uri: embedUrl }}
+                                source={{
+                                    html: `
+                <!DOCTYPE html>
+                <html>
+                  <body style="margin:0;">
+                    <div id="player" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+                    <script>
+                      var tag = document.createElement('script');
+                      tag.src = "https://www.youtube.com/iframe_api";
+                      var firstScriptTag = document.getElementsByTagName('script')[0];
+                      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+                      var player;
+                      function onYouTubeIframeAPIReady() {
+                        player = new YT.Player('player', {
+                          height: '100%',
+                          width: '100%',
+                          videoId: '${youtubeUrl.split('v=')[1]}',
+                          playerVars: {
+                            'playsinline': 1
+                          },
+                          events: {
+                            'onReady': onPlayerReady,
+                            'onStateChange': onPlayerStateChange
+                          }
+                        });
+                      }
+
+                      function onPlayerReady(event) {
+                        event.target.playVideo();
+                        setInterval(() => {
+                            window.ReactNativeWebView.postMessage(JSON.stringify(player.getCurrentTime()));
+                        }, 300);
+                      }
+
+                      function onPlayerStateChange(event) {
+                        if (event.data == YT.PlayerState.PLAYING) {
+                          // Handle player state change
+                        }
+                      }
+                    </script>
+                  </body>
+                </html>
+            `,
+                                }}
                                 javaScriptEnabled={true}
+                                onMessage={(event) => {
+                                    const currentTime = JSON.parse(event.nativeEvent.data);
+                                    setCurrentTime(currentTime);
+                                }}
                             />
                         ) : (
                             <View style={styles.overlay}>
-                                <Text style={
-                                    {
-                                        fontSize: 20,
-                                        textAlign: 'center',
-                                    }
-                                } >Click the sidebar or enter a YouTube link to start!</Text>
+                                <Text style={{ fontSize: 20, textAlign: 'center' }}>
+                                    Click the sidebar or enter a YouTube link to start!
+                                </Text>
                             </View>
                         )}
-                        <View style={styles.overlay}/>
+                        <View style={styles.overlay} />
                     </View>
+
+
+
 
                     <View style={styles.lyricsContainer}>
                         <Text style={styles.lyricsText}>{currentLyric}</Text>
@@ -489,6 +539,8 @@ const styles = StyleSheet.create({
     },
     webview: {
         flex: 1,
+        width: '100%',
+        height: '100%',
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
