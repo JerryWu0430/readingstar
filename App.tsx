@@ -326,47 +326,54 @@ export default function App() {
                                 style={styles.webview}
                                 source={{
                                     html: `
-                    <!DOCTYPE html>
-                    <html>
-                      <body style="margin:0;">
-                        <div id="player" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
-                        <script>
-                          var tag = document.createElement('script');
-                          tag.src = "https://www.youtube.com/iframe_api";
-                          var firstScriptTag = document.getElementsByTagName('script')[0];
-                          firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+                <!DOCTYPE html>
+                <html>
+                  <body style="margin:0;">
+                    <div id="player" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+                    <script>
+                      var tag = document.createElement('script');
+                      tag.src = "https://www.youtube.com/iframe_api";
+                      var firstScriptTag = document.getElementsByTagName('script')[0];
+                      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-                          var player;
-                          function onYouTubeIframeAPIReady() {
-                            player = new YT.Player('player', {
-                              height: '100%',
-                              width: '100%',
-                              videoId: '${youtubeUrl.split('v=')[1]}',
-                              playerVars: {
-                                'playsinline': 1
-                              },
-                              events: {
-                                'onReady': onPlayerReady,
-                                'onStateChange': onPlayerStateChange
-                              }
-                            });
+                      var player;
+                      function onYouTubeIframeAPIReady() {
+                        player = new YT.Player('player', {
+                          height: '100%',
+                          width: '100%',
+                          videoId: '${youtubeUrl.split('v=')[1]}',
+                          playerVars: {
+                            'playsinline': 1
+                          },
+                          events: {
+                            'onReady': onPlayerReady,
+                            'onStateChange': onPlayerStateChange
                           }
+                        });
+                      }
 
-                          function onPlayerReady(event) {
-                            event.target.playVideo();
-                          }
+                      function onPlayerReady(event) {
+                        event.target.playVideo();
+                        setInterval(() => {
+                            window.ReactNativeWebView.postMessage(JSON.stringify(player.getCurrentTime()));
+                        }, 1000);
+                      }
 
-                          function onPlayerStateChange(event) {
-                            if (event.data == YT.PlayerState.PLAYING) {
-                              // Handle player state change
-                            }
-                          }
-                        </script>
-                      </body>
-                    </html>
-                `,
+                      function onPlayerStateChange(event) {
+                        if (event.data == YT.PlayerState.PLAYING) {
+                          // Handle player state change
+                        }
+                      }
+                    </script>
+                  </body>
+                </html>
+            `,
                                 }}
                                 javaScriptEnabled={true}
+                                onMessage={(event) => {
+                                    const currentTime = JSON.parse(event.nativeEvent.data);
+                                    console.log('Current Time:', currentTime);
+                                }}
                             />
                         ) : (
                             <View style={styles.overlay}>
@@ -377,6 +384,7 @@ export default function App() {
                         )}
                         <View style={styles.overlay} />
                     </View>
+
 
 
 
