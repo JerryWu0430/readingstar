@@ -324,21 +324,61 @@ export default function App() {
                         {youtubeUrl ? (
                             <WebView
                                 style={styles.webview}
-                                source={{ uri: embedUrl }}
+                                source={{
+                                    html: `
+                    <!DOCTYPE html>
+                    <html>
+                      <body style="margin:0;">
+                        <div id="player" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+                        <script>
+                          var tag = document.createElement('script');
+                          tag.src = "https://www.youtube.com/iframe_api";
+                          var firstScriptTag = document.getElementsByTagName('script')[0];
+                          firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+                          var player;
+                          function onYouTubeIframeAPIReady() {
+                            player = new YT.Player('player', {
+                              height: '100%',
+                              width: '100%',
+                              videoId: '${youtubeUrl.split('v=')[1]}',
+                              playerVars: {
+                                'playsinline': 1
+                              },
+                              events: {
+                                'onReady': onPlayerReady,
+                                'onStateChange': onPlayerStateChange
+                              }
+                            });
+                          }
+
+                          function onPlayerReady(event) {
+                            event.target.playVideo();
+                          }
+
+                          function onPlayerStateChange(event) {
+                            if (event.data == YT.PlayerState.PLAYING) {
+                              // Handle player state change
+                            }
+                          }
+                        </script>
+                      </body>
+                    </html>
+                `,
+                                }}
                                 javaScriptEnabled={true}
                             />
                         ) : (
                             <View style={styles.overlay}>
-                                <Text style={
-                                    {
-                                        fontSize: 20,
-                                        textAlign: 'center',
-                                    }
-                                } >Click the sidebar or enter a YouTube link to start!</Text>
+                                <Text style={{ fontSize: 20, textAlign: 'center' }}>
+                                    Click the sidebar or enter a YouTube link to start!
+                                </Text>
                             </View>
                         )}
-                        <View style={styles.overlay}/>
+                        <View style={styles.overlay} />
                     </View>
+
+
 
                     <View style={styles.lyricsContainer}>
                         <Text style={styles.lyricsText}>{currentLyric}</Text>
@@ -489,6 +529,8 @@ const styles = StyleSheet.create({
     },
     webview: {
         flex: 1,
+        width: '100%',
+        height: '100%',
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
