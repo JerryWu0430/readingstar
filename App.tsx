@@ -36,6 +36,7 @@ export default function App() {
     const colorScheme = useColorScheme();
     const timerRef = useRef(null);
     const [showStar, setShowStar] = useState(false);
+    const [videoPlaying, setVideoPlaying] = useState(false);
     const [playlist, setPlaylist] = useState<string[][]>([
         ['Humpty Dumpty', 'https://www.youtube.com/watch?v=nrv495corBc'],
         ['The Hokey Cokey', 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'],
@@ -78,6 +79,7 @@ export default function App() {
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
         setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}?autoplay=1&controls=0`);
         getSongTitle(url);
+        setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
     };
 
@@ -357,7 +359,7 @@ export default function App() {
                       function onPlayerReady(event) {
                         event.target.playVideo();
                         setInterval(() => {
-                            window.ReactNativeWebView.postMessage(JSON.stringify(player.getCurrentTime(), 'time'));
+                            window.ReactNativeWebView.postMessage(JSON.stringify(player.getCurrentTime()));
                         }, 300);
                         window.ReactNativeWebView.postMessage(JSON.stringify(player.getDuration(), 'duration'));
 
@@ -366,6 +368,8 @@ export default function App() {
                       function onPlayerStateChange(event) {
                         if (event.data == YT.PlayerState.PLAYING) {
                           // Handle player state change
+                        } else if (event.data == YT.PlayerState.ENDED) {
+                          window.ReactNativeWebView.postMessage(JSON.stringify('video_end'));
                         }
                       }
                     </script>
@@ -376,7 +380,12 @@ export default function App() {
                                 javaScriptEnabled={true}
                                 onMessage={(event) => {
                                     const currentTime = JSON.parse(event.nativeEvent.data);
-                                    setCurrentTime(currentTime);
+                                    if (currentTime === 'video_end') {
+                                        console.log('Video ended');
+                                        setVideoPlaying(false);
+                                    } else {
+                                        setCurrentTime(currentTime);
+                                    }
                                 }}
                             />
                         ) : (
