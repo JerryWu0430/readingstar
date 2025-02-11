@@ -357,8 +357,10 @@ export default function App() {
                       function onPlayerReady(event) {
                         event.target.playVideo();
                         setInterval(() => {
-                            window.ReactNativeWebView.postMessage(JSON.stringify(player.getCurrentTime()));
+                            window.ReactNativeWebView.postMessage(JSON.stringify(player.getCurrentTime(), 'time'));
                         }, 300);
+                        window.ReactNativeWebView.postMessage(JSON.stringify(player.getDuration(), 'duration'));
+
                       }
 
                       function onPlayerStateChange(event) {
