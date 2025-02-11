@@ -326,7 +326,8 @@ export default function App() {
 
                     <View style={styles.videoContainer}>
                         {youtubeUrl ? (
-                            <WebView
+                            videoPlaying ?
+                            (<WebView
                                 style={styles.webview}
                                 source={{
                                     html: `
@@ -387,7 +388,19 @@ export default function App() {
                                         setCurrentTime(currentTime);
                                     }
                                 }}
-                            />
+                            />) : 
+                            (<View style={styles.overlay}>
+                                <Text style={{ fontSize: 20, textAlign: 'center' }}>
+                                    Well done for completing the song {songTitle}!
+                                </Text>
+                                {score > 0 ? (
+                                    <Text style={{ fontSize: 20, textAlign: 'center' }}>
+                                        You won {score} points!
+                                    </Text>
+                                ) : null}
+                            </View>
+                            )
+                            
                         ) : (
                             <View style={styles.overlay}>
                                 <Text style={{ fontSize: 20, textAlign: 'center' }}>
