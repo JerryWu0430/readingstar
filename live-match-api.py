@@ -10,6 +10,7 @@ import speech_recognition as sr
 from notebook_utils import device_widget
 import uvicorn
 from time import sleep
+import pyaudio
 
 # Set up OpenVINO and device
 device = device_widget(default="CPU", exclude=["NPU"])
@@ -35,7 +36,9 @@ current_verse = ""  # The current lyric phrase
 prev_prev_verse = ""  # The lyric phrase before the previous one
 data_queue = Queue()
 current_match = {"text": None, "similarity": 0.0}
+audio = pyaudio.PyAudio()
 source = sr.Microphone(sample_rate=16000)
+
 
 def record_callback(_, audio: sr.AudioData) -> None:
    data = audio.get_raw_data()
@@ -46,6 +49,36 @@ class Phrase(BaseModel):
     lyric: str
 
 app = FastAPI()
+
+
+@app.get("/devices")
+def get_devices():
+    """List available audio input devices"""
+    devices = []
+    for i in range(audio.get_device_count()):
+        device_info = audio.get_device_info_by_index(i)
+        if device_info['maxInputChannels'] > 0:  # Input devices only
+            devices.append({
+                'index': i,
+                'name': device_info['name'],
+                'channels': device_info['maxInputChannels']
+            })
+    return devices
+
+@app.post("/select_device/{device_index}")
+def select_device(device_index: int):
+    """Set microphone source by device index"""
+    global source
+    try:
+        source = sr.Microphone(
+            device_index=device_index,
+            sample_rate=16000
+        )
+        print("selected device", device_index)
+        return {"message": f"Selected device {device_index}"}
+    except Exception as e:
+        raise JSONResponse(content={"error": f"Failed to select device {device_index}: {e}"}, status_code=400)
+
 
 # Helper function to find the closest match
 def find_similarity(transcription, lyric):
@@ -127,7 +160,6 @@ def get_match():
         print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
         return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})
     return JSONResponse(content={"match": "no", "similarity": current_match["similarity"]})
-
 
 # Run FastAPI
 if __name__ == "__main__":

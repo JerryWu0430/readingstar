@@ -13,6 +13,8 @@ import WebView from 'react-native-webview';
 import { SvgXml } from 'react-native-svg';
 import { parseString } from 'react-native-xml2js';
 import he from 'he';
+import { Picker } from '@react-native-picker/picker';
+
 
 const menuSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>`;
 const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -44,10 +46,47 @@ export default function App() {
         ['Apples and Bananas', 'https://www.youtube.com/watch?v=r5WLXZspD1M'],
         ['Hush Little Baby', 'https://www.youtube.com/watch?v=f_raDpgx_3M'],
     ]);
+    interface AudioDevice {
+        index: number;
+        name: string;
+    }
+    
+    const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([]);
+    const [selectedDevice, setSelectedDevice] = useState(null);
+
 
     interface YoutubeUrl {
         url: string;
     }
+
+    useEffect(() => {
+        const fetchDevices = async () => {
+            try {
+                const response = await fetch('http://localhost:8000/devices');
+                const devices = await response.json();
+                setAudioDevices(devices);
+                if (devices.length > 0) {
+                    setSelectedDevice(devices[0].index);
+                }
+            } catch (error) {
+                console.error('Error fetching devices:', error);
+            }
+        };
+        fetchDevices();
+    }, []);
+
+    const handleDeviceChange = async (deviceIndex) => {
+        try {
+            const response = await fetch(`http://localhost:8000/select_device/${deviceIndex}`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                setSelectedDevice(deviceIndex);
+            }
+        } catch (error) {
+            console.error('Error selecting device:', error);
+        }
+    };
 
     useEffect(() => {
         const startTranscription = async () => {
@@ -247,7 +286,6 @@ export default function App() {
                     <SvgXml xml={accountSvg} width={24} height={24} />
                 </View>
             </View>
-
             
             <View style={[styles.starContainer, {marginTop: 280, marginLeft: 300}]}>
                 {showStar && ( // Conditionally render the star
@@ -402,6 +440,22 @@ export default function App() {
                         <Text style={[styles.difficultyOption, { color: '#22c55e' }]}>Easy</Text>
                         <Text style={[styles.difficultyOption, { color: '#f97316' }]}>Medium</Text>
                         <Text style={[styles.difficultyOption, { color: '#dc2626' }]}>Hard</Text>
+                    </View>
+                    <View style={styles.deviceSelector}>
+                        <Text style={styles.label}>Select Microphone:</Text>
+                        <Picker
+                            selectedValue={selectedDevice}
+                            onValueChange={handleDeviceChange}
+                            style={styles.picker}
+                        >
+                            {audioDevices.map((device) => (
+                                <Picker.Item 
+                                    key={device.index}
+                                    label={device.name}
+                                    value={device.index}
+                                />
+                            ))}
+                        </Picker>
                     </View>
 
                     <Pressable
@@ -670,6 +724,22 @@ const styles = StyleSheet.create({
     star: {
         opacity: 1, // Optional styling for animation
     },
+    deviceSelector: {
+        marginBottom: 16,
+        width: '100%',
+    },
+    picker: {
+        height: 50,
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#dcdcdc',
+    },
+    label: {
+        fontSize: 14,
+        marginBottom: 8,
+        color: '#666',
+    }
 });
 
 
