@@ -132,6 +132,7 @@ export default function App() {
                 setPlaylist([...playlist, titleUrlTuple]);
             }
 
+            setScore(0);
             console.log('Loading song:', title);
             setSongTitle(title);
             setSelectedSong(title);
