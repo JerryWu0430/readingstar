@@ -36,6 +36,7 @@ export default function App() {
     const colorScheme = useColorScheme();
     const timerRef = useRef(null);
     const [showStar, setShowStar] = useState(false);
+    const [videoPlaying, setVideoPlaying] = useState(false);
     const [playlist, setPlaylist] = useState<string[][]>([
         ['Humpty Dumpty', 'https://www.youtube.com/watch?v=nrv495corBc'],
         ['The Hokey Cokey', 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'],
@@ -78,6 +79,7 @@ export default function App() {
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
         setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}?autoplay=1&controls=0`);
         getSongTitle(url);
+        setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
     };
 
@@ -130,6 +132,7 @@ export default function App() {
                 setPlaylist([...playlist, titleUrlTuple]);
             }
 
+            setScore(0);
             console.log('Loading song:', title);
             setSongTitle(title);
             setSelectedSong(title);
@@ -324,7 +327,8 @@ export default function App() {
 
                     <View style={styles.videoContainer}>
                         {youtubeUrl ? (
-                            <WebView
+                            videoPlaying ?
+                            (<WebView
                                 style={styles.webview}
                                 source={{
                                     html: `
@@ -359,11 +363,15 @@ export default function App() {
                         setInterval(() => {
                             window.ReactNativeWebView.postMessage(JSON.stringify(player.getCurrentTime()));
                         }, 300);
+                        window.ReactNativeWebView.postMessage(JSON.stringify(player.getDuration(), 'duration'));
+
                       }
 
                       function onPlayerStateChange(event) {
                         if (event.data == YT.PlayerState.PLAYING) {
                           // Handle player state change
+                        } else if (event.data == YT.PlayerState.ENDED) {
+                          window.ReactNativeWebView.postMessage(JSON.stringify('video_end'));
                         }
                       }
                     </script>
@@ -374,9 +382,26 @@ export default function App() {
                                 javaScriptEnabled={true}
                                 onMessage={(event) => {
                                     const currentTime = JSON.parse(event.nativeEvent.data);
-                                    setCurrentTime(currentTime);
+                                    if (currentTime === 'video_end') {
+                                        console.log('Video ended');
+                                        setVideoPlaying(false);
+                                    } else {
+                                        setCurrentTime(currentTime);
+                                    }
                                 }}
-                            />
+                            />) : 
+                            (<View style={styles.overlay}>
+                                <Text style={{ fontSize: 20, textAlign: 'center' }}>
+                                    Well done for completing the song {songTitle}!
+                                </Text>
+                                {score > 0 ? (
+                                    <Text style={{ fontSize: 20, textAlign: 'center' }}>
+                                        You won {score} points!
+                                    </Text>
+                                ) : null}
+                            </View>
+                            )
+                            
                         ) : (
                             <View style={styles.overlay}>
                                 <Text style={{ fontSize: 20, textAlign: 'center' }}>
