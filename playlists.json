@@ -1,0 +1,55 @@
+{
+    "playlists": [
+        {
+            "id": 0,
+            "name": "Nursery Rhymes",
+            "songs": [
+                {
+                    "id": 0,
+                    "name": "Humpty Dumpty",
+                    "url": "https://www.youtube.com/watch?v=nrv495corBc"
+                },
+                {
+                    "id": 1,
+                    "name": "The Hokey Cokey",
+                    "url": "https://www.youtube.com/watch?v=YAMYsNe7DMQ"
+                },
+                {
+                    "id": 2,
+                    "name": "Looby Loo",
+                    "url": "https://www.youtube.com/watch?v=EHaoEKcuX0g"
+                },
+                {
+                    "id": 3,
+                    "name": "Twinkle, Twinkle...",
+                    "url": "https://www.youtube.com/watch?v=yCjJyiqpAuU"
+                },
+                {
+                    "id": 4,
+                    "name": "Apples and Bananas",
+                    "url": "https://www.youtube.com/watch?v=r5WLXZspD1M"
+                },
+                {
+                    "id": 5,
+                    "name": "Hush Little Baby",
+                    "url": "https://www.youtube.com/watch?v=f_raDpgx_3M"
+                }
+            ]
+        },
+        {
+            "id": 1,
+            "name": "Easy",
+            "songs": []
+        },
+        {
+            "id": 2,
+            "name": "Medium",
+            "songs": []
+        },
+        {
+            "id": 3,
+            "name": "Hard",
+            "songs": []
+        }
+    ]
+}
