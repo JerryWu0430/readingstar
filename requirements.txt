@@ -1,0 +1,10 @@
+pip install optimum['openvino']
+pip install openvino-genai
+pip install numpy
+pip install pydantic
+pip install uvicorn
+pip install fastapi
+pip install SpeechRecognition
+pip install iPython
+pip install pyaudio
+pip install ipywidgets
