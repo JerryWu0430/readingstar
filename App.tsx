@@ -226,9 +226,9 @@ export default function App() {
                 previousLyricRef.current = currentLyric; // Update previous lyric
                 setCurrentLyric(currentLyric); // Update state
                 startMatching(currentLyric); // Call startMatching
+                checkMatch();
             }
 
-            checkMatch(); // Check for matches (runs regardless)
         }
     }, [currentTime, lyrics]);
 
