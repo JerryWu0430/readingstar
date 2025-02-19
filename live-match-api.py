@@ -7,14 +7,13 @@ from difflib import SequenceMatcher
 import numpy as np
 import openvino_genai as ov_genai
 import speech_recognition as sr
-from notebook_utils import device_widget
 import uvicorn
 from time import sleep
 
 # Set up OpenVINO and device
-device = device_widget(default="CPU", exclude=["NPU"])
+device = "CPU"
 model_path = "whisper-tiny-en-openvino"
-ov_pipe = ov_genai.WhisperPipeline(str(model_path), device=device.value)
+ov_pipe = ov_genai.WhisperPipeline(str(model_path), device=device)
 
 # Audio recording setup
 energy_threshold = 500
