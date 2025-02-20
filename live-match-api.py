@@ -10,6 +10,7 @@ import speech_recognition as sr
 from notebook_utils import device_widget
 import uvicorn
 from time import sleep
+import json
 
 # Set up OpenVINO and device
 device = device_widget(default="CPU", exclude=["NPU"])
@@ -87,6 +88,16 @@ def process_audio():
 
     except Exception as e:
         print(f"Error during transcription: {e}")
+
+# FastAPI endpoint to post the playlist from playlists.json
+@app.get('/playlists')
+def get_playlist():
+    """
+    Post the playlist from playlist.json.
+    """
+    with open('playlists.json', 'r') as f:
+        allPlaylists = f.read()
+    return JSONResponse(content=json.loads(allPlaylists), status_code=200)
 
 # FastAPI endpoint to update the current lyric and process audio
 @app.post("/update_lyric")
