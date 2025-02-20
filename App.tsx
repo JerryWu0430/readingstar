@@ -37,18 +37,45 @@ export default function App() {
     const timerRef = useRef(null);
     const [showStar, setShowStar] = useState(false);
     const [videoPlaying, setVideoPlaying] = useState(false);
-    const [playlist, setPlaylist] = useState<string[][]>([
-        ['Humpty Dumpty', 'https://www.youtube.com/watch?v=nrv495corBc'],
-        ['The Hokey Cokey', 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'],
-        ['Looby Loo', 'https://www.youtube.com/watch?v=EHaoEKcuX0g'],
-        ['Twinkle, Twinkle...', 'https://www.youtube.com/watch?v=yCjJyiqpAuU'],
-        ['Apples and Bananas', 'https://www.youtube.com/watch?v=r5WLXZspD1M'],
-        ['Hush Little Baby', 'https://www.youtube.com/watch?v=f_raDpgx_3M'],
-    ]);
+    const [playlist, setPlaylist] = useState<{id: number, name: string, url: string}[]>([]); // Initial playlist [name, url]
+    const [playlistName, setPlaylistName] = useState('Nursery Rhymes');
+    
+    const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
 
     interface YoutubeUrl {
         url: string;
     }
+
+    function findFromPlaylist(url: string) {
+        return playlist.find((item) => item.url === url) ?? {};
+    }
+
+    const fetchPlaylist = async () => {
+        try {
+            // Call GET /match to check if the server matched the current lyric
+            const response = await fetch("http://localhost:8000/playlists", {
+                method: "GET",
+            });
+            const playlistData = await response.json();
+
+            for (const playlist of playlistData.playlists) {
+                allPlaylists[playlist?.name] = playlist.songs;
+            }
+        } catch (error) {
+            allPlaylists['Nursery Rhymes'] = [
+                {id: 0, name: 'Humpty Dumpty', url: 'https://www.youtube.com/watch?v=nrv495corBc'},
+                {id: 1, name: 'The Hokey Cokey', url: 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'},
+                {id: 2, name: 'Looby Loo', url: 'https://www.youtube.com/watch?v=EHaoEKcuX0g'},
+                {id: 3, name: 'Twinkle, Twinkle...', url: 'https://www.youtube.com/watch?v=yCjJyiqpAuU'},
+                {id: 4, name: 'Apples and Bananas', url: 'https://www.youtube.com/watch?v=r5WLXZspD1M'},
+                {id: 5, name: 'Hush Little Baby', url: 'https://www.youtube.com/watch?v=f_raDpgx_3M'},
+            ];
+            setPlaylistName('Nursery Rhymes OG');
+        }
+        setPlaylist(allPlaylists['Nursery Rhymes']);
+    };
+
+    fetchPlaylist();
 
     useEffect(() => {
         const startTranscription = async () => {
@@ -116,7 +143,7 @@ export default function App() {
 
     const getSongTitle = async (url : string) => {
         try {
-            let title = playlist.find((item) => item[1] === url)?.[0] ?? '';
+            let title = findFromPlaylist(url).name ?? '';
             // if url not in playlist, fetch song title
             if (!title) {
                 console.log('Fetching song title...');
@@ -128,8 +155,8 @@ export default function App() {
                 if (title.includes('YouTube')) {
                     title = title.substring(0, title.indexOf(' - YouTube'));
                 }
-                const titleUrlTuple = [title, url];
-                setPlaylist([...playlist, titleUrlTuple]);
+                const songItem = {id: playlist.length, name: title, url: url};
+                setPlaylist([...playlist, songItem]);
             }
 
             setScore(0);
@@ -143,17 +170,12 @@ export default function App() {
 
     const playFromPlaylist = async (song: string) => {
         setSelectedSong(song);
-        const songUrl = playlist.find((item) => item[0] === song)[1];
+        const songUrl = playlist.find((item) => item.name === song)?.url;
         if (songUrl) {
             setYoutubeUrl(songUrl);
             getYoutubeEmbedUrl(songUrl);
         }
     }
-
-    useEffect(() => {
-        // This effect will run whenever the playlist state changes
-        console.log('Playlist updated:', playlist);
-    }, [playlist]);
 
     const fetchYoutubeSubtitles = async (url: string) => {
         try {
@@ -265,24 +287,24 @@ export default function App() {
 
             <View style={styles.content}>
                 <View style={styles.sidebar}>
-                    <Text style={styles.playlistTitle}>Playlist #1</Text>
+                    <Text style={styles.playlistTitle}>{playlistName}</Text>
                     <ScrollView>
                         {playlist.map((song, index) => (
                             <Pressable
                                 key={index}
                                 style={[
                                     styles.playlistItem,
-                                    song[0] === selectedSong && styles.playlistItemSelected,
+                                    song.name === selectedSong && styles.playlistItemSelected,
                                 ]}
-                                onPress={() => playFromPlaylist(song[0])}
+                                onPress={() => playFromPlaylist(song.name)}
                             >
                                 <Text
                                     style={[
                                         styles.playlistItemText,
-                                        song[0] === selectedSong && styles.playlistItemTextSelected,
+                                        song.name === selectedSong && styles.playlistItemTextSelected,
                                     ]}
                                 >
-                                    {song[0]}
+                                    {song.name}
                                 </Text>
                             </Pressable>
                         ))}
@@ -532,6 +554,7 @@ const styles = StyleSheet.create({
     mainContent: {
         flex: 1,
         padding: 16,
+        minWidth: 500, // Add fixed min width
     },
     scoreContainer: {
         backgroundColor: '#e8f4ff',
@@ -557,10 +580,12 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         overflow: 'hidden',
         position: 'relative',
+        minWidth: 300, // Add fixed min width
         maxWidth: 800,  // Add fixed max width
         maxHeight: 450, // Add fixed max height
         width: '100%',  // Take available width up to max
         alignSelf: 'center',
+        flex: 0,
     },
     webview: {
         flex: 1,
