@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -7,14 +8,16 @@ from difflib import SequenceMatcher
 import numpy as np
 import openvino_genai as ov_genai
 import speech_recognition as sr
-from notebook_utils import device_widget
 import uvicorn
 from time import sleep
 
 # Set up OpenVINO and device
-device = device_widget(default="CPU", exclude=["NPU"])
-model_path = "whisper-tiny-en-openvino"
-ov_pipe = ov_genai.WhisperPipeline(str(model_path), device=device.value)
+device = "CPU"
+# Adjust the model path to be relative to the executable location
+model_path = os.path.join(os.path.dirname(__file__), "whisper-tiny-en-openvino")
+print(f"Model path: {model_path}")
+ov_pipe = ov_genai.WhisperPipeline(str(model_path), device=device)
+print("OpenVINO pipeline initialized")
 
 # Audio recording setup
 energy_threshold = 500
@@ -25,6 +28,7 @@ data_queue = Queue()
 recorder = sr.Recognizer()
 recorder.energy_threshold = energy_threshold
 recorder.dynamic_energy_threshold = True
+print("Audio recorder initialized")
 
 # Shared variables
 global current_verse
@@ -36,6 +40,7 @@ prev_prev_verse = ""  # The lyric phrase before the previous one
 data_queue = Queue()
 current_match = {"text": None, "similarity": 0.0}
 source = sr.Microphone(sample_rate=16000)
+print("Microphone source initialized")
 
 def record_callback(_, audio: sr.AudioData) -> None:
    data = audio.get_raw_data()
@@ -46,6 +51,7 @@ class Phrase(BaseModel):
     lyric: str
 
 app = FastAPI()
+print("FastAPI app initialized")
 
 # Helper function to find the closest match
 def find_similarity(transcription, lyric):
@@ -62,6 +68,7 @@ def process_audio():
     """
     Record audio, process it, and compare it to the current lyric.
     """
+    print("Transcription process started")
     with source:
         recorder.adjust_for_ambient_noise(source)
     stop_call = recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
@@ -127,7 +134,6 @@ def get_match():
         print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
         return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})
     return JSONResponse(content={"match": "no", "similarity": current_match["similarity"]})
-
 
 # Run FastAPI
 if __name__ == "__main__":
