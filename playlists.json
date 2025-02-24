@@ -2,7 +2,7 @@
     "playlists": [
         {
             "id": 0,
-            "name": "Nursery Rhymes",
+            "name": "Classic Nursery Rhymes",
             "songs": [
                 {
                     "id": 0,
@@ -39,17 +39,35 @@
         {
             "id": 1,
             "name": "Easy",
-            "songs": []
+            "songs": [
+                {
+                    "id": 0,
+                    "name": "Humpty Dumpty",
+                    "url": "https://www.youtube.com/watch?v=nrv495corBc"
+                }
+            ]
         },
         {
             "id": 2,
             "name": "Medium",
-            "songs": []
+            "songs": [
+                {
+                    "id": 1,
+                    "name": "The Hokey Cokey",
+                    "url": "https://www.youtube.com/watch?v=YAMYsNe7DMQ"
+                }
+            ]
         },
         {
             "id": 3,
             "name": "Hard",
-            "songs": []
+            "songs": [
+                {
+                    "id": 2,
+                    "name": "Looby Loo",
+                    "url": "https://www.youtube.com/watch?v=EHaoEKcuX0g"
+                }
+            ]
         }
     ]
 }
