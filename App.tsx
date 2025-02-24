@@ -22,7 +22,6 @@ const accountSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" /></svg>`;
 
 export default function App() {
-
     const [score, setScore] = useState(0);
     const [selectedSong, setSelectedSong] = useState('');
     const [difficulty, setDifficulty] = useState('Easy');
@@ -38,7 +37,9 @@ export default function App() {
     const [showStar, setShowStar] = useState(false);
     const [videoPlaying, setVideoPlaying] = useState(false);
     const [playlist, setPlaylist] = useState<{id: number, name: string, url: string}[]>([]); // Initial playlist [name, url]
-    const [playlistName, setPlaylistName] = useState('Nursery Rhymes');
+    const [playlistName, setPlaylistName] = useState('');
+    const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
+    const [playlistLoaded, setPlaylistLoaded] = useState(false);
     
     const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
 
@@ -46,13 +47,8 @@ export default function App() {
         url: string;
     }
 
-    function findFromPlaylist(url: string) {
-        return playlist.find((item) => item.url === url) ?? {};
-    }
-
-    const fetchPlaylist = async () => {
+    const fetchPlaylists = async () => {
         try {
-            // Call GET /match to check if the server matched the current lyric
             const response = await fetch("http://localhost:8000/playlists", {
                 method: "GET",
             });
@@ -61,8 +57,13 @@ export default function App() {
             for (const playlist of playlistData.playlists) {
                 allPlaylists[playlist?.name] = playlist.songs;
             }
+            setAllPlaylistNames(Object.keys(allPlaylists));
+            setPlaylistName(Object.keys(allPlaylists)[0]);
+            setPlaylist(allPlaylists[Object.keys(allPlaylists)[0]]);
+            setPlaylistLoaded(true);
+            
         } catch (error) {
-            allPlaylists['Nursery Rhymes'] = [
+            allPlaylists['Nursery Rhymes OG'] = [
                 {id: 0, name: 'Humpty Dumpty', url: 'https://www.youtube.com/watch?v=nrv495corBc'},
                 {id: 1, name: 'The Hokey Cokey', url: 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'},
                 {id: 2, name: 'Looby Loo', url: 'https://www.youtube.com/watch?v=EHaoEKcuX0g'},
@@ -70,12 +71,15 @@ export default function App() {
                 {id: 4, name: 'Apples and Bananas', url: 'https://www.youtube.com/watch?v=r5WLXZspD1M'},
                 {id: 5, name: 'Hush Little Baby', url: 'https://www.youtube.com/watch?v=f_raDpgx_3M'},
             ];
-            setPlaylistName('Nursery Rhymes OG');
         }
-        setPlaylist(allPlaylists['Nursery Rhymes']);
+        setAllPlaylistNames(Object.keys(allPlaylists));
     };
+    
+    function findFromPlaylist(url: string) {
+        return playlist.find((item) => item.url === url) ?? {};
+    }
 
-    fetchPlaylist();
+    const useMountEffect = (f: () => void) => useEffect(f, []);
 
     useEffect(() => {
         const startTranscription = async () => {
@@ -168,7 +172,7 @@ export default function App() {
         }
     };
 
-    const playFromPlaylist = async (song: string) => {
+    const playFromCurrentPlaylist = async (song: string) => {
         setSelectedSong(song);
         const songUrl = playlist.find((item) => item.name === song)?.url;
         if (songUrl) {
@@ -176,6 +180,15 @@ export default function App() {
             getYoutubeEmbedUrl(songUrl);
         }
     }
+
+    const switchPlaylist = async (playlistName: string) => {
+        setPlaylistName(playlistName);
+        setPlaylist(allPlaylists[playlistName]);
+        console.log('Switching playlist:', playlistName);
+        console.log('Playlist:', allPlaylists[playlistName]);
+    }
+
+    useMountEffect(fetchPlaylists);
 
     const fetchYoutubeSubtitles = async (url: string) => {
         try {
@@ -289,25 +302,29 @@ export default function App() {
                 <View style={styles.sidebar}>
                     <Text style={styles.playlistTitle}>{playlistName}</Text>
                     <ScrollView>
-                        {playlist.map((song, index) => (
-                            <Pressable
-                                key={index}
-                                style={[
-                                    styles.playlistItem,
-                                    song.name === selectedSong && styles.playlistItemSelected,
-                                ]}
-                                onPress={() => playFromPlaylist(song.name)}
-                            >
-                                <Text
-                                    style={[
-                                        styles.playlistItemText,
-                                        song.name === selectedSong && styles.playlistItemTextSelected,
-                                    ]}
-                                >
-                                    {song.name}
-                                </Text>
-                            </Pressable>
-                        ))}
+                        {playlist ? (
+                                playlist.map((song, index) => (
+                                        <Pressable
+                                            key={index}
+                                            style={[
+                                                styles.playlistItem,
+                                                song.name === selectedSong && styles.playlistItemSelected,
+                                            ]}
+                                            onPress={() => playFromCurrentPlaylist(song.name)}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.playlistItemText,
+                                                    song.name === selectedSong && styles.playlistItemTextSelected,
+                                                ]}
+                                            >
+                                                {song.name}
+                                            </Text>
+                                        </Pressable>
+                                    ))
+                        ) : (
+                            <Text>Loading...</Text>
+                        ) }
                     </ScrollView>
                 </View>
 
@@ -445,10 +462,24 @@ export default function App() {
 
                 <View style={styles.rightPanel}>
                     <View style={styles.difficultyContainer}>
+                        <Text style={styles.sectionTitle}>Playlists</Text>
+                        <ScrollView>
+                            {allPlaylistNames.map(name => (
+                                <Text
+                                    key={name}
+                                    style={[styles.difficultyOption, { color: name === playlistName ? '#005bb5' : '#333' }]}
+                                    onPress={() => switchPlaylist(name)}
+                                >
+                                    {name}
+                                </Text>
+                            ))}
+                        </ScrollView>
+                    </View>
+                    <View style={styles.difficultyContainer}>
                         <Text style={styles.sectionTitle}>Difficulty</Text>
-                        <Text style={[styles.difficultyOption, { color: '#22c55e' }]}>Easy</Text>
-                        <Text style={[styles.difficultyOption, { color: '#f97316' }]}>Medium</Text>
-                        <Text style={[styles.difficultyOption, { color: '#dc2626' }]}>Hard</Text>
+                        <Text style={[styles.difficultyOption, { color: '#22c55e' }]} onPress={() => switchPlaylist('Easy')}>Easy</Text>
+                        <Text style={[styles.difficultyOption, { color: '#f97316' }]} onPress={() => switchPlaylist('Medium')}>Medium</Text>
+                        <Text style={[styles.difficultyOption, { color: '#dc2626' }]} onPress={() => switchPlaylist('Hard')}>Hard</Text>
                     </View>
 
                     <Pressable
