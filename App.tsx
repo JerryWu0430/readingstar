@@ -37,7 +37,7 @@ export default function App() {
     const [showStar, setShowStar] = useState(false);
     const [videoPlaying, setVideoPlaying] = useState(false);
     const [playlist, setPlaylist] = useState<{id: number, name: string, url: string}[]>([]); // Initial playlist [name, url]
-    const [playlistName, setPlaylistName] = useState('');
+    const [playlistName, setPlaylistName] = useState('Classic Nursery Rhymes');
     const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
     const [allPlaylistsGetter, setAllPlaylistsGetter] = useState<{ [key: string]: {id: number, name: string, url: string}[] }>({});
     const [playlistLoaded, setPlaylistLoaded] = useState(false);
