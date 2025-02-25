@@ -38,35 +38,34 @@
         },
         {
             "id": 1,
-            "name": "Easy",
+            "name": "Disney Songs",
             "songs": [
                 {
                     "id": 0,
-                    "name": "Humpty Dumpty",
-                    "url": "https://www.youtube.com/watch?v=nrv495corBc"
-                }
-            ]
-        },
-        {
-            "id": 2,
-            "name": "Medium",
-            "songs": [
+                    "name": "Let it Go | Frozen",
+                    "url": "https://www.youtube.com/watch?v=L0MK7qz13bU"
+                },
                 {
                     "id": 1,
-                    "name": "The Hokey Cokey",
-                    "url": "https://www.youtube.com/watch?v=YAMYsNe7DMQ"
-                }
-            ]
-        },
-        {
-            "id": 3,
-            "name": "Hard",
-            "songs": [
+                    "name": "You're Welcome | Moana",
+                    "url": "https://www.youtube.com/watch?v=8D74hdVkqxU"
+                },
                 {
                     "id": 2,
-                    "name": "Looby Loo",
-                    "url": "https://www.youtube.com/watch?v=EHaoEKcuX0g"
+                    "name": "I'll Make A Man Out of You | Mulan",
+                    "url": "https://www.youtube.com/watch?v=nExOFS6ZjeU"
+                },
+                {
+                    "id": 3,
+                    "name": "Under the Sea | The Little Mermaid",
+                    "url": "https://www.youtube.com/watch?v=rtFFcErWMlE"
+                },
+                {
+                    "id": 4,
+                    "name": "Almost There | The Princess and the Frog",
+                    "url": "https://www.youtube.com/watch?v=HlSU00RbqR8"
                 }
+
             ]
         }
     ]

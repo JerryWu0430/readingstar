@@ -82,7 +82,7 @@ export default function App() {
             console.log('Playlists loaded:', allPlaylists);
         });
     };
-    
+
     function findFromPlaylist(url: string) {
         return playlist.find((item) => item.url === url) ?? {};
     }
@@ -354,7 +354,6 @@ export default function App() {
                     </View>
 
                     <View style={styles.inputContainer}>
-
                         <TextInput
                             style={[
                                 styles.textInput,
