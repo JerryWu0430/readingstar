@@ -22,7 +22,6 @@ const accountSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" /></svg>`;
 
 export default function App() {
-
     const [score, setScore] = useState(0);
     const [selectedSong, setSelectedSong] = useState('');
     const [difficulty, setDifficulty] = useState('Easy');
@@ -37,18 +36,58 @@ export default function App() {
     const timerRef = useRef(null);
     const [showStar, setShowStar] = useState(false);
     const [videoPlaying, setVideoPlaying] = useState(false);
-    const [playlist, setPlaylist] = useState<string[][]>([
-        ['Humpty Dumpty', 'https://www.youtube.com/watch?v=nrv495corBc'],
-        ['The Hokey Cokey', 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'],
-        ['Looby Loo', 'https://www.youtube.com/watch?v=EHaoEKcuX0g'],
-        ['Twinkle, Twinkle...', 'https://www.youtube.com/watch?v=yCjJyiqpAuU'],
-        ['Apples and Bananas', 'https://www.youtube.com/watch?v=r5WLXZspD1M'],
-        ['Hush Little Baby', 'https://www.youtube.com/watch?v=f_raDpgx_3M'],
-    ]);
+    const [playlist, setPlaylist] = useState<{id: number, name: string, url: string}[]>([]); // Initial playlist [name, url]
+    const [playlistName, setPlaylistName] = useState('Classic Nursery Rhymes');
+    const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
+    const [allPlaylistsGetter, setAllPlaylistsGetter] = useState<{ [key: string]: {id: number, name: string, url: string}[] }>({});
+    const [playlistLoaded, setPlaylistLoaded] = useState(false);
+    
+    const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
 
     interface YoutubeUrl {
         url: string;
     }
+
+    const fetchPlaylists = () => {
+        return new Promise<void>(async (resolve, reject) => {
+            setPlaylistLoaded(false);
+            try {
+                const response = await fetch("http://localhost:8000/playlists", {
+                    method: "GET",
+                });
+                const playlistData = await response.json();
+
+                for (const playlist of playlistData.playlists) {
+                    allPlaylists[playlist?.name] = playlist.songs;
+
+                }
+                setAllPlaylistNames(Object.keys(allPlaylists));
+                playlistName ?? setPlaylistName(Object.keys(allPlaylists)[0]);
+                setPlaylist(allPlaylists[playlistName]);
+                setAllPlaylistsGetter(allPlaylists);
+                resolve();
+            } catch (error) {
+                allPlaylists['Nursery Rhymes OG'] = [
+                    {id: 0, name: 'Humpty Dumpty', url: 'https://www.youtube.com/watch?v=nrv495corBc'},
+                    {id: 1, name: 'The Hokey Cokey', url: 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'},
+                    {id: 2, name: 'Looby Loo', url: 'https://www.youtube.com/watch?v=EHaoEKcuX0g'},
+                    {id: 3, name: 'Twinkle, Twinkle...', url: 'https://www.youtube.com/watch?v=yCjJyiqpAuU'},
+                    {id: 4, name: 'Apples and Bananas', url: 'https://www.youtube.com/watch?v=r5WLXZspD1M'},
+                    {id: 5, name: 'Hush Little Baby', url: 'https://www.youtube.com/watch?v=f_raDpgx_3M'},
+                ];
+                reject(error);
+            }
+            setAllPlaylistNames(Object.keys(allPlaylists));
+            setPlaylistLoaded(true);
+            console.log('Playlists loaded:', allPlaylists);
+        });
+    };
+
+    function findFromPlaylist(url: string) {
+        return playlist.find((item) => item.url === url) ?? {};
+    }
+
+    const useMountEffect = (f: () => void) => useEffect(f, []);
 
     useEffect(() => {
         const startTranscription = async () => {
@@ -116,7 +155,7 @@ export default function App() {
 
     const getSongTitle = async (url : string) => {
         try {
-            let title = playlist.find((item) => item[1] === url)?.[0] ?? '';
+            let title = findFromPlaylist(url).name ?? '';
             // if url not in playlist, fetch song title
             if (!title) {
                 console.log('Fetching song title...');
@@ -128,8 +167,8 @@ export default function App() {
                 if (title.includes('YouTube')) {
                     title = title.substring(0, title.indexOf(' - YouTube'));
                 }
-                const titleUrlTuple = [title, url];
-                setPlaylist([...playlist, titleUrlTuple]);
+                const songItem = {id: playlist.length, name: title, url: url};
+                setPlaylist([...playlist, songItem]);
             }
 
             setScore(0);
@@ -141,19 +180,35 @@ export default function App() {
         }
     };
 
-    const playFromPlaylist = async (song: string) => {
+    const playFromCurrentPlaylist = async (song: string) => {
         setSelectedSong(song);
-        const songUrl = playlist.find((item) => item[0] === song)[1];
+        const songUrl = playlist.find((item) => item.name === song)?.url;
         if (songUrl) {
             setYoutubeUrl(songUrl);
             getYoutubeEmbedUrl(songUrl);
         }
     }
 
-    useEffect(() => {
-        // This effect will run whenever the playlist state changes
-        console.log('Playlist updated:', playlist);
-    }, [playlist]);
+    useMountEffect(fetchPlaylists);
+
+    const switchPlaylist = (playlistName: string) => {
+        if (allPlaylistsGetter[playlistName]) {
+            setPlaylistLoaded(false);
+            setPlaylistName(playlistName);
+            setPlaylist(allPlaylistsGetter[playlistName]);
+            console.log('Switching playlist:', playlistName);
+            console.log('Playlist:', allPlaylistsGetter[playlistName]);
+            setPlaylistLoaded(true);
+        } else {
+            console.log('All playlists:', allPlaylistsGetter);
+            console.log('Playlist not found:', playlistName);
+        }
+    }
+
+    const switchDifficulty = (difficulty: string) => {
+        setDifficulty(difficulty);
+        console.log('Switching difficulty to:', difficulty);
+    }
 
     const fetchYoutubeSubtitles = async (url: string) => {
         try {
@@ -265,27 +320,31 @@ export default function App() {
 
             <View style={styles.content}>
                 <View style={styles.sidebar}>
-                    <Text style={styles.playlistTitle}>Playlist #1</Text>
+                    <Text style={styles.playlistTitle}>{playlistName}</Text>
                     <ScrollView>
-                        {playlist.map((song, index) => (
-                            <Pressable
-                                key={index}
-                                style={[
-                                    styles.playlistItem,
-                                    song[0] === selectedSong && styles.playlistItemSelected,
-                                ]}
-                                onPress={() => playFromPlaylist(song[0])}
-                            >
-                                <Text
-                                    style={[
-                                        styles.playlistItemText,
-                                        song[0] === selectedSong && styles.playlistItemTextSelected,
-                                    ]}
-                                >
-                                    {song[0]}
-                                </Text>
-                            </Pressable>
-                        ))}
+                        {playlistLoaded && playlist ? (
+                                playlist.map((song, index) => (
+                                        <Pressable
+                                            key={index}
+                                            style={[
+                                                styles.playlistItem,
+                                                song.name === selectedSong && styles.playlistItemSelected,
+                                            ]}
+                                            onPress={() => playFromCurrentPlaylist(song.name)}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.playlistItemText,
+                                                    song.name === selectedSong && styles.playlistItemTextSelected,
+                                                ]}
+                                            >
+                                                {song.name}
+                                            </Text>
+                                        </Pressable>
+                                    ))
+                        ) : (
+                            <Text>Loading...</Text>
+                        ) }
                     </ScrollView>
                 </View>
 
@@ -295,7 +354,6 @@ export default function App() {
                     </View>
 
                     <View style={styles.inputContainer}>
-
                         <TextInput
                             style={[
                                 styles.textInput,
@@ -412,9 +470,6 @@ export default function App() {
                         <View style={styles.overlay} />
                     </View>
 
-
-
-
                     <View style={styles.lyricsContainer}>
                         <Text style={styles.lyricsText}>{currentLyric}</Text>
                         <SvgXml xml={microphoneSvg} width={32} height={32} />
@@ -423,10 +478,24 @@ export default function App() {
 
                 <View style={styles.rightPanel}>
                     <View style={styles.difficultyContainer}>
+                        <Text style={styles.sectionTitle}>Playlists</Text>
+                        <ScrollView>
+                            {allPlaylistNames.map(name => (
+                                <Text
+                                    key={name}
+                                    style={[styles.difficultyOption, { color: name === playlistName ? '#005bb5' : '#333' }]}
+                                    onPress={() => switchPlaylist(name)}
+                                >
+                                    {name}
+                                </Text>
+                            ))}
+                        </ScrollView>
+                    </View>
+                    <View style={styles.difficultyContainer}>
                         <Text style={styles.sectionTitle}>Difficulty</Text>
-                        <Text style={[styles.difficultyOption, { color: '#22c55e' }]}>Easy</Text>
-                        <Text style={[styles.difficultyOption, { color: '#f97316' }]}>Medium</Text>
-                        <Text style={[styles.difficultyOption, { color: '#dc2626' }]}>Hard</Text>
+                        <Text style={[styles.difficultyOption, { color: '#22c55e' }]} onPress={() => switchDifficulty('Easy')}>Easy</Text>
+                        <Text style={[styles.difficultyOption, { color: '#f97316' }]} onPress={() => switchDifficulty('Medium')}>Medium</Text>
+                        <Text style={[styles.difficultyOption, { color: '#dc2626' }]} onPress={() => switchDifficulty('Hard')}>Hard</Text>
                     </View>
 
                     <Pressable
@@ -532,6 +601,7 @@ const styles = StyleSheet.create({
     mainContent: {
         flex: 1,
         padding: 16,
+        minWidth: 500, // Add fixed min width
     },
     scoreContainer: {
         backgroundColor: '#e8f4ff',
@@ -557,10 +627,12 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         overflow: 'hidden',
         position: 'relative',
+        minWidth: 300, // Add fixed min width
         maxWidth: 800,  // Add fixed max width
         maxHeight: 450, // Add fixed max height
         width: '100%',  // Take available width up to max
         alignSelf: 'center',
+        flex: 0,
     },
     webview: {
         flex: 1,
