@@ -39,6 +39,7 @@ export default function App() {
     const [playlist, setPlaylist] = useState<{id: number, name: string, url: string}[]>([]); // Initial playlist [name, url]
     const [playlistName, setPlaylistName] = useState('');
     const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
+    const [allPlaylistsGetter, setAllPlaylistsGetter] = useState<{ [key: string]: {id: number, name: string, url: string}[] }>({});
     const [playlistLoaded, setPlaylistLoaded] = useState(false);
     
     const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
@@ -47,32 +48,39 @@ export default function App() {
         url: string;
     }
 
-    const fetchPlaylists = async () => {
-        try {
-            const response = await fetch("http://localhost:8000/playlists", {
-                method: "GET",
-            });
-            const playlistData = await response.json();
+    const fetchPlaylists = () => {
+        return new Promise<void>(async (resolve, reject) => {
+            setPlaylistLoaded(false);
+            try {
+                const response = await fetch("http://localhost:8000/playlists", {
+                    method: "GET",
+                });
+                const playlistData = await response.json();
 
-            for (const playlist of playlistData.playlists) {
-                allPlaylists[playlist?.name] = playlist.songs;
+                for (const playlist of playlistData.playlists) {
+                    allPlaylists[playlist?.name] = playlist.songs;
+
+                }
+                setAllPlaylistNames(Object.keys(allPlaylists));
+                playlistName ?? setPlaylistName(Object.keys(allPlaylists)[0]);
+                setPlaylist(allPlaylists[playlistName]);
+                setAllPlaylistsGetter(allPlaylists);
+                resolve();
+            } catch (error) {
+                allPlaylists['Nursery Rhymes OG'] = [
+                    {id: 0, name: 'Humpty Dumpty', url: 'https://www.youtube.com/watch?v=nrv495corBc'},
+                    {id: 1, name: 'The Hokey Cokey', url: 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'},
+                    {id: 2, name: 'Looby Loo', url: 'https://www.youtube.com/watch?v=EHaoEKcuX0g'},
+                    {id: 3, name: 'Twinkle, Twinkle...', url: 'https://www.youtube.com/watch?v=yCjJyiqpAuU'},
+                    {id: 4, name: 'Apples and Bananas', url: 'https://www.youtube.com/watch?v=r5WLXZspD1M'},
+                    {id: 5, name: 'Hush Little Baby', url: 'https://www.youtube.com/watch?v=f_raDpgx_3M'},
+                ];
+                reject(error);
             }
             setAllPlaylistNames(Object.keys(allPlaylists));
-            setPlaylistName(Object.keys(allPlaylists)[0]);
-            setPlaylist(allPlaylists[Object.keys(allPlaylists)[0]]);
             setPlaylistLoaded(true);
-            
-        } catch (error) {
-            allPlaylists['Nursery Rhymes OG'] = [
-                {id: 0, name: 'Humpty Dumpty', url: 'https://www.youtube.com/watch?v=nrv495corBc'},
-                {id: 1, name: 'The Hokey Cokey', url: 'https://www.youtube.com/watch?v=YAMYsNe7DMQ'},
-                {id: 2, name: 'Looby Loo', url: 'https://www.youtube.com/watch?v=EHaoEKcuX0g'},
-                {id: 3, name: 'Twinkle, Twinkle...', url: 'https://www.youtube.com/watch?v=yCjJyiqpAuU'},
-                {id: 4, name: 'Apples and Bananas', url: 'https://www.youtube.com/watch?v=r5WLXZspD1M'},
-                {id: 5, name: 'Hush Little Baby', url: 'https://www.youtube.com/watch?v=f_raDpgx_3M'},
-            ];
-        }
-        setAllPlaylistNames(Object.keys(allPlaylists));
+            console.log('Playlists loaded:', allPlaylists);
+        });
     };
     
     function findFromPlaylist(url: string) {
@@ -181,14 +189,26 @@ export default function App() {
         }
     }
 
-    const switchPlaylist = async (playlistName: string) => {
-        setPlaylistName(playlistName);
-        setPlaylist(allPlaylists[playlistName]);
-        console.log('Switching playlist:', playlistName);
-        console.log('Playlist:', allPlaylists[playlistName]);
+    useMountEffect(fetchPlaylists);
+
+    const switchPlaylist = (playlistName: string) => {
+        if (allPlaylistsGetter[playlistName]) {
+            setPlaylistLoaded(false);
+            setPlaylistName(playlistName);
+            setPlaylist(allPlaylistsGetter[playlistName]);
+            console.log('Switching playlist:', playlistName);
+            console.log('Playlist:', allPlaylistsGetter[playlistName]);
+            setPlaylistLoaded(true);
+        } else {
+            console.log('All playlists:', allPlaylistsGetter);
+            console.log('Playlist not found:', playlistName);
+        }
     }
 
-    useMountEffect(fetchPlaylists);
+    const switchDifficulty = (difficulty: string) => {
+        setDifficulty(difficulty);
+        console.log('Switching difficulty to:', difficulty);
+    }
 
     const fetchYoutubeSubtitles = async (url: string) => {
         try {
@@ -302,7 +322,7 @@ export default function App() {
                 <View style={styles.sidebar}>
                     <Text style={styles.playlistTitle}>{playlistName}</Text>
                     <ScrollView>
-                        {playlist ? (
+                        {playlistLoaded && playlist ? (
                                 playlist.map((song, index) => (
                                         <Pressable
                                             key={index}
@@ -451,9 +471,6 @@ export default function App() {
                         <View style={styles.overlay} />
                     </View>
 
-
-
-
                     <View style={styles.lyricsContainer}>
                         <Text style={styles.lyricsText}>{currentLyric}</Text>
                         <SvgXml xml={microphoneSvg} width={32} height={32} />
@@ -477,9 +494,9 @@ export default function App() {
                     </View>
                     <View style={styles.difficultyContainer}>
                         <Text style={styles.sectionTitle}>Difficulty</Text>
-                        <Text style={[styles.difficultyOption, { color: '#22c55e' }]} onPress={() => switchPlaylist('Easy')}>Easy</Text>
-                        <Text style={[styles.difficultyOption, { color: '#f97316' }]} onPress={() => switchPlaylist('Medium')}>Medium</Text>
-                        <Text style={[styles.difficultyOption, { color: '#dc2626' }]} onPress={() => switchPlaylist('Hard')}>Hard</Text>
+                        <Text style={[styles.difficultyOption, { color: '#22c55e' }]} onPress={() => switchDifficulty('Easy')}>Easy</Text>
+                        <Text style={[styles.difficultyOption, { color: '#f97316' }]} onPress={() => switchDifficulty('Medium')}>Medium</Text>
+                        <Text style={[styles.difficultyOption, { color: '#dc2626' }]} onPress={() => switchDifficulty('Hard')}>Hard</Text>
                     </View>
 
                     <Pressable
