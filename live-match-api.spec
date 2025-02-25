@@ -10,6 +10,10 @@ datas += collect_data_files('openvino_genai')
 binaries += collect_dynamic_libs('openvino_genai')
 hiddenimports += collect_submodules('openvino_genai')
 
+datas += collect_data_files('openvino')
+binaries += collect_dynamic_libs('openvino')
+hiddenimports += collect_submodules('openvino')
+
 # Collect dynamic libraries for openvino_tokenizers
 binaries += collect_dynamic_libs('openvino_tokenizers')
 

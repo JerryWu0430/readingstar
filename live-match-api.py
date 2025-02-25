@@ -1,4 +1,5 @@
 import os
+import sys
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -14,10 +15,25 @@ from time import sleep
 # Set up OpenVINO and device
 device = "CPU"
 # Adjust the model path to be relative to the executable location
-model_path = os.path.join(os.path.dirname(__file__), "whisper-tiny-en-openvino")
-print(f"Model path: {model_path}")
-ov_pipe = ov_genai.WhisperPipeline(str(model_path), device=device)
-print("OpenVINO pipeline initialized")
+model_dir = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), "whisper-tiny-en-openvino")
+print(f"Model directory: {model_dir}")
+
+# Check if the model directory exists
+if not os.path.exists(model_dir):
+    raise FileNotFoundError(f"Model directory not found at {model_dir}")
+
+# Check if the necessary model files exist
+model_files = ["openvino_tokenizer.xml", "openvino_tokenizer.bin"]
+for file in model_files:
+    if not os.path.exists(os.path.join(model_dir, file)):
+        raise FileNotFoundError(f"Model file {file} not found in directory {model_dir}")
+
+try:
+    ov_pipe = ov_genai.WhisperPipeline(model_dir, device=device)
+    print("OpenVINO pipeline initialized")
+except Exception as e:
+    print(f"Error initializing OpenVINO pipeline: {e}")
+    sys.exit(1)
 
 # Audio recording setup
 energy_threshold = 500
@@ -137,4 +153,4 @@ def get_match():
 
 # Run FastAPI
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("live-match-api:app", host="0.0.0.0", port=8000, reload=True)
