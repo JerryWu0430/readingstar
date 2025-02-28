@@ -12,12 +12,12 @@ import speech_recognition as sr
 import uvicorn
 from time import sleep
 import json
+import multiprocessing
 
 # Set up OpenVINO and device
 device = "CPU"
 # Adjust the model path to be relative to the executable location
 model_dir = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), "whisper-tiny-en-openvino")
-print(f"Model directory: {model_dir}")
 
 # Check if the model directory exists
 if not os.path.exists(model_dir):
@@ -31,9 +31,7 @@ for file in model_files:
 
 try:
     ov_pipe = ov_genai.WhisperPipeline(model_dir, device=device)
-    print("OpenVINO pipeline initialized")
 except Exception as e:
-    print(f"Error initializing OpenVINO pipeline: {e}")
     sys.exit(1)
 
 # Audio recording setup
@@ -45,7 +43,7 @@ data_queue = Queue()
 recorder = sr.Recognizer()
 recorder.energy_threshold = energy_threshold
 recorder.dynamic_energy_threshold = True
-print("Audio recorder initialized")
+
 
 # Shared variables
 global current_verse
@@ -57,7 +55,6 @@ prev_prev_verse = ""  # The lyric phrase before the previous one
 data_queue = Queue()
 current_match = {"text": None, "similarity": 0.0}
 source = sr.Microphone(sample_rate=16000)
-print("Microphone source initialized")
 
 def record_callback(_, audio: sr.AudioData) -> None:
    data = audio.get_raw_data()
@@ -68,7 +65,6 @@ class Phrase(BaseModel):
     lyric: str
 
 app = FastAPI()
-print("FastAPI app initialized")
 
 # Helper function to find the closest match
 def find_similarity(transcription, lyric):
@@ -118,7 +114,9 @@ def get_playlist():
     """
     Post the playlist from playlist.json.
     """
-    with open('playlists.json', 'r') as f:
+    playlists_path = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), 'playlists.json', 'playlists.json')
+    
+    with open(playlists_path, 'r') as f:
         allPlaylists = f.read()
     return JSONResponse(content=json.loads(allPlaylists), status_code=200)
 
@@ -164,4 +162,5 @@ def get_match():
 
 # Run FastAPI
 if __name__ == "__main__":
-    uvicorn.run("live-match-api:app", host="0.0.0.0", port=8000, reload=True)
+    multiprocessing.freeze_support()
+    uvicorn.run("live-match-api:app", host="0.0.0.0", port=8000, reload=False)
