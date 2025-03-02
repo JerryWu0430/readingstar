@@ -110,7 +110,7 @@
         },
         {
             "id": 2,
-            "name": "Easy",
+            "name": "Starter",
             "songs": [
                 {
                     "id": 0,
@@ -121,7 +121,7 @@
         },
         {
             "id": 3,
-            "name": "Medium",
+            "name": "Challenge",
             "songs": [
                 {
                     "id": 1,
@@ -132,7 +132,7 @@
         },
         {
             "id": 4,
-            "name": "Hard",
+            "name": "Ultimate",
             "songs": [
                 {
                     "id": 2,
