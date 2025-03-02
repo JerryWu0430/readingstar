@@ -24,6 +24,7 @@ const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 2
 
 export default function App() {
     const [score, setScore] = useState(0);
+    const [finalScore, setFinalScore] = useState(0);
     const [selectedSong, setSelectedSong] = useState('');
     const [difficulty, setDifficulty] = useState('Easy');
     const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -108,7 +109,7 @@ export default function App() {
             });
         }
         catch (error) {
-            console.error('Failed to stop microphone:', error);
+            
         }
         try {
             const response = await fetch('http://localhost:8000/transcribe', {
@@ -251,7 +252,7 @@ export default function App() {
                 const subtitleResponse = await fetch(subtitleUrl);
                 const subtitleText = await subtitleResponse.text();
 
-                parseString(subtitleText, (err, result) => {
+                parseString(subtitleText, async (err, result) => {
                     if (err) {
                         console.error('Error parsing XML:', err);
                         return;
@@ -261,6 +262,19 @@ export default function App() {
                         time: parseFloat(item.$.start),
                     }));
                     setLyrics(lyricsArray);
+                    try{
+                        //call Post method full_lyrics to provide lyrics
+                        await fetch('http://localhost:8000/full_lyric', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ lyric: lyricsArray}),
+                        });
+                    }
+                    catch (error) {
+                        console.error('Error setting lyrics:', error);
+                    }
                 });
             }
         } catch (error) {
@@ -487,6 +501,26 @@ export default function App() {
                                         } catch (error) {
                                             console.error('Failed to stop microphone:', error);
                                         }
+                                        await new Promise(resolve => setTimeout(resolve, 1000));
+                                        try {
+                                            const response = await fetch('http://localhost:8000/final_score', {
+                                                method: 'GET',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                },
+                                            });
+                                        
+                                            if (!response.ok) {
+                                                throw new Error('Failed to fetch final score');
+                                            }
+                                        
+                                            const data = await response.json(); // Extract JSON response
+                                            setFinalScore(data.final_score); // Store score in state
+                                        
+                                            console.log("Final Score:", data.final_score);
+                                        } catch (error) {
+                                            console.error("Error fetching final score:", error);
+                                        }
 
                                     } else {
                                         setCurrentTime(currentTime);
@@ -500,6 +534,7 @@ export default function App() {
                                 {score > 0 ? (
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                         You won {score} points!
+                                        You matched {finalScore * 100}% of the lyrics!
                                     </Text>
                                 ) : null}
                             </View>

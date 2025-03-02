@@ -66,12 +66,10 @@ def record_callback(_, audio: sr.AudioData) -> None:
 class Phrase(BaseModel):
     lyric: str
 
-app = FastAPI()
+class Lyric(BaseModel):
+    lyric: list
 
-# Helper function to find the closest match
-def find_similarity(transcription, lyric):
-    similarity = SequenceMatcher(None, transcription, lyric).ratio()
-    return similarity
+app = FastAPI()
 
 global similarity
 similarity = 0.0
@@ -128,6 +126,8 @@ def process_audio():
 @app.get("/close_microphone")
 def close_microphone():
     global stop_call, stop_flag
+    if stop_call is None:
+        return JSONResponse(content={"message": "Microphone already closed."}, status_code=200)
     stop_flag = True
     stop_call()
     return JSONResponse(content={"message": "Microphone closed."}, status_code=200)
@@ -142,6 +142,22 @@ def save_audio_to_file(audio_bytes):
         wf.setframerate(16000)
         wf.writeframes(audio_bytes)
     print("Audio saved successfully as recorded_audio.wav!")
+
+@app.get("/final_score")
+def final_score():
+    #transcribe the recorded_audio.wav file
+    recognized_wav = None
+    global full_lyric
+    try:
+        with wave.open("recorded_audio.wav", "rb") as wf:
+            audio_data = wf.readframes(wf.getnframes())
+            audio_np = np.frombuffer(audio_data, np.int16).astype(np.float32) / 32768.0
+            genai_result = ov_pipe.generate(audio_np)
+            recognized_wav = str(genai_result).strip()
+    except Exception as e:
+        print(f"Error during final transcription: {e}")
+    similarity= SequenceMatcher(None, recognized_wav, full_lyric).ratio()
+    return JSONResponse(content={"final_score": similarity}, status_code=200)
 
 # FastAPI endpoint to post the playlist from playlists.json
 @app.get('/playlists')
@@ -171,6 +187,17 @@ def update_lyric(phrase: Phrase):
         content={"message": f"Updated current lyric to: '{current_verse}' and processed audio."}, 
         status_code=200
     )
+
+full_lyric = ""
+lyric_array = []
+@app.post("/full_lyric")
+def full_lyric(request: Lyric):
+    global full_lyric
+    global lyric_array
+    lyric_array = request.lyric
+    full_lyric = " ".join([entry["lyric"] for entry in lyric_array])
+    print(f"Received full lyric: {full_lyric}")
+    return JSONResponse(content={"message": "Received full lyric."}, status_code=200)
 
 # FastAPI endpoint to get the current match result
 @app.get("/match")
