@@ -38,6 +38,47 @@
         },
         {
             "id": 1,
+            "name": "Helen Allison School",
+            "songs": [
+                {
+                  "id": 0,
+                  "name": "Hello Song for Kids (Singing Walrus)",
+                  "url": "https://www.youtube.com/watch?v=gghDRJVxFxU"
+                },
+                {
+                  "id": 1,
+                  "name": "Old MacDonald",
+                  "url": "https://www.youtube.com/watch?v=_6HzoUcx3eo"
+                },
+                {
+                  "id": 2,
+                  "name": "Baby Shark",
+                  "url": "https://www.youtube.com/watch?v=GR2o6k8aPlI"
+                },
+                {
+                  "id": 3,
+                  "name": "5 Little Speckled Frogs",
+                  "url": "https://www.youtube.com/watch?v=8VCpa4blanQ"
+                },
+                {
+                  "id": 4,
+                  "name": "Twinkle, Twinkle...",
+                  "url": "https://www.youtube.com/watch?v=yCjJyiqpAuU"
+                },
+                {
+                  "id": 5,
+                  "name": "ABC Song",
+                  "url": "https://www.youtube.com/watch?v=ccEpTTZW34g"
+                },
+                {
+                  "id": 6,
+                  "name": "Happy by Pharrell Williams",
+                  "url": ""
+                }
+            ] 
+        },
+        {
+            "id": 1,
             "name": "Disney Songs",
             "songs": [
                 {
@@ -65,7 +106,6 @@
                     "name": "Colours of the Wind | Pocahontas",
                     "url": "https://www.youtube.com/watch?v=nI9BkfcZAMA"
                 }
-
             ]
         },
         {

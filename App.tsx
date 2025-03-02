@@ -87,7 +87,7 @@ export default function App() {
         return playlist.find((item) => item.url === url) ?? {};
     }
 
-    const useMountEffect = (f: () => void) => useEffect(f, []);
+    const useMountEffect = (f: () => void) => useEffect(() => { f(); }, []);
 
     useEffect(() => {
         const startTranscription = async () => {
@@ -450,7 +450,7 @@ export default function App() {
                             />) : 
                             (<View style={styles.overlay}>
                                 <Text style={{ fontSize: 20, textAlign: 'center' }}>
-                                    Well done for completing the song {songTitle}!
+                                    Well done for completing the song "{songTitle}"!
                                 </Text>
                                 {score > 0 ? (
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
