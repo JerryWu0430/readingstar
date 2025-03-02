@@ -499,13 +499,20 @@ export default function App() {
                         <Text style={styles.sectionTitle}>Playlists</Text>
                         <ScrollView>
                             {allPlaylistNames.map(name => (
-                                <Text
+                                <Pressable
                                     key={name}
-                                    style={[styles.difficultyOption, { color: name === playlistName ? '#005bb5' : '#333' }]}
-                                    onPress={() => switchPlaylist(name)}
-                                >
-                                    {name}
-                                </Text>
+                                    style={({ pressed }) => [
+                                        styles.button,
+                                        styles.submitButton,
+                                        (pressed || name == playlistName) && { backgroundColor: '#00b533' },
+                                    ]}
+                                    onPress={() => switchPlaylist(name)}>
+                                    <Text
+                                        style={[styles.buttonText]}
+                                    >
+                                        {name}
+                                    </Text>
+                                </Pressable>
                             ))}
                         </ScrollView>
                     </View>
@@ -685,6 +692,7 @@ const styles = StyleSheet.create({
         color: '#005bb5',
     },
     rightPanel: {
+        flex: 1,
         width: 200,
         padding: 16,
         backgroundColor: '#ffffff',
@@ -733,6 +741,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
         color: '#fff',
+        textAlign: 'center'
     },
     submitButton: {
         backgroundColor: '#0078d4',

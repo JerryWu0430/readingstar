@@ -78,7 +78,7 @@
             ]
         },
         {
-            "id": 1,
+            "id": 2,
             "name": "Disney Songs",
             "songs": [
                 {
@@ -109,7 +109,7 @@
             ]
         },
         {
-            "id": 2,
+            "id": 3,
             "name": "Starter",
             "songs": [
                 {
@@ -120,7 +120,7 @@
             ]
         },
         {
-            "id": 3,
+            "id": 4,
             "name": "Challenge",
             "songs": [
                 {
@@ -131,7 +131,7 @@
             ]
         },
         {
-            "id": 4,
+            "id": 5,
             "name": "Ultimate",
             "songs": [
                 {
@@ -140,6 +140,21 @@
                     "url": "https://www.youtube.com/watch?v=EHaoEKcuX0g"
                 }
             ]
+        },
+        {
+            "id": 6,
+            "name": "Playlist 1",
+            "songs": []
+        },
+        {
+            "id": 7,
+            "name": "Playlist 2",
+            "songs": []
+        },
+        {
+            "id": 8,
+            "name": "Playlist 3",
+            "songs": []
         }
     ]
 }
