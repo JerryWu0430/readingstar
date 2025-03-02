@@ -88,7 +88,7 @@ def process_audio():
     Record audio, process it, and compare it to the current lyric.
     """
     print("Transcription process started")
-    global stop_call
+    global stop_call, source
     with source:
         recorder.adjust_for_ambient_noise(source)
     stop_call = recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
@@ -104,17 +104,19 @@ def process_audio():
         while not stop_flag:
             now = datetime.utcnow()
             if not data_queue.empty():
+                #getting the currently recognized text
                 if phrase_time and now - phrase_time > timedelta(seconds=phrase_timeout):
                     phrase_complete = True
                 phrase_time = now
                 audio_data = b''.join(data_queue.queue)
+                #For recording wav file
+                audio_chunk = data_queue.get()
+                recorded_audio.write(audio_chunk)
                 data_queue.queue.clear()
                 audio_np = np.frombuffer(audio_data, np.int16).astype(np.float32) / 32768.0
                 genai_result = ov_pipe.generate(audio_np)
                 recognized_text = str(genai_result).strip()
                 print(f"Recognized: {recognized_text}")
-                audio_chunk = recorder.record(source, duration=1) 
-                recorded_audio.write(audio_chunk.frame_data)
             else:
                 sleep(0.1)
         print("Recording stopped, saving file...")
@@ -122,7 +124,7 @@ def process_audio():
     except Exception as e:
         print(f"Error during transcription: {e}")
 
-#FASTAPI endpoint to close the microphone
+
 @app.get("/close_microphone")
 def close_microphone():
     global stop_call, stop_flag

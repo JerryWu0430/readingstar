@@ -13,6 +13,7 @@ import WebView from 'react-native-webview';
 import { SvgXml } from 'react-native-svg';
 import { parseString } from 'react-native-xml2js';
 import he from 'he';
+import { AppState, AppStateStatus } from "react-native";
 
 const menuSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>`;
 const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -98,7 +99,17 @@ export default function App() {
         getSongTitle(url);
         setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
-
+        try{
+            const response = await fetch('http://localhost:8000/close_microphone', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+        }
+        catch (error) {
+            console.error('Failed to stop microphone:', error);
+        }
         try {
             const response = await fetch('http://localhost:8000/transcribe', {
                 method: 'POST',
@@ -288,6 +299,33 @@ export default function App() {
             setScore(prevScore => prevScore + 100);
         }
     }, [showStar]);
+
+    useEffect(() => {
+        const handleAppStateChange = (nextAppState: AppStateStatus) => {
+          console.log("App state changed to:", nextAppState);
+      
+          if (nextAppState === "inactive") {
+            try {
+              fetch("http://localhost:8000/close_microphone", {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              });
+            } catch (error) {
+              console.error("Failed to stop microphone:", error);
+            }
+          }
+        };
+      
+        // Subscribe to app state changes
+        const subscription = AppState.addEventListener("change", handleAppStateChange);
+      
+        // Cleanup function to remove the event listener on unmount
+        return () => {
+          subscription.remove();
+        };
+      }, []);
 
     return (
         <SafeAreaView style={styles.container}>
