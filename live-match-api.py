@@ -13,6 +13,8 @@ import uvicorn
 from time import sleep
 import json
 import multiprocessing
+import wave
+import io
 
 # Set up OpenVINO and device
 device = "CPU"
@@ -75,6 +77,10 @@ global similarity
 similarity = 0.0
 global recognized_text
 recognized_text = ""
+global stop_call
+stop_call = None
+global stop_flag
+stop_flag = True
 # Transcription process
 @app.post("/transcribe")
 def process_audio():
@@ -82,6 +88,7 @@ def process_audio():
     Record audio, process it, and compare it to the current lyric.
     """
     print("Transcription process started")
+    global stop_call
     with source:
         recorder.adjust_for_ambient_noise(source)
     stop_call = recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
@@ -89,8 +96,12 @@ def process_audio():
     global phrase_time
     global phrase_timeout
     global recognized_text
+    global stop_flag
+    stop_flag = False
+    global recorded_audio
+    recorded_audio = io.BytesIO() 
     try:
-        while True:
+        while not stop_flag:
             now = datetime.utcnow()
             if not data_queue.empty():
                 if phrase_time and now - phrase_time > timedelta(seconds=phrase_timeout):
@@ -102,11 +113,33 @@ def process_audio():
                 genai_result = ov_pipe.generate(audio_np)
                 recognized_text = str(genai_result).strip()
                 print(f"Recognized: {recognized_text}")
+                audio_chunk = recorder.record(source, duration=1) 
+                recorded_audio.write(audio_chunk.frame_data)
             else:
-                sleep(0.25)
-
+                sleep(0.1)
+        print("Recording stopped, saving file...")
+        save_audio_to_file(recorded_audio.getvalue())
     except Exception as e:
         print(f"Error during transcription: {e}")
+
+#FASTAPI endpoint to close the microphone
+@app.get("/close_microphone")
+def close_microphone():
+    global stop_call, stop_flag
+    stop_flag = True
+    stop_call()
+    return JSONResponse(content={"message": "Microphone closed."}, status_code=200)
+
+
+def save_audio_to_file(audio_bytes):
+    """ Saves recorded audio to a WAV file """
+    print("Saving recorded audio...")
+    with wave.open("recorded_audio.wav", "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(16000)
+        wf.writeframes(audio_bytes)
+    print("Audio saved successfully as recorded_audio.wav!")
 
 # FastAPI endpoint to post the playlist from playlists.json
 @app.get('/playlists')
@@ -114,7 +147,7 @@ def get_playlist():
     """
     Post the playlist from playlist.json.
     """
-    playlists_path = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), 'playlists.json', 'playlists.json')
+    playlists_path = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), 'playlists.json')
     
     with open(playlists_path, 'r') as f:
         allPlaylists = f.read()

@@ -89,30 +89,8 @@ export default function App() {
 
     const useMountEffect = (f: () => void) => useEffect(f, []);
 
-    useEffect(() => {
-        const startTranscription = async () => {
-            try {
-                const response = await fetch('http://localhost:8000/transcribe', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                console.log('Transcription started');
-            } catch (error) {
-                console.error('Failed to start transcription:', error);
-            }
-        };
-    
-        startTranscription();
-    }, []); 
 
-    const getYoutubeEmbedUrl = (url: string): void => {
+    const getYoutubeEmbedUrl = async (url: string): Promise<void> => {
         const videoId: string | undefined = url.split('v=')[1];
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
@@ -120,6 +98,23 @@ export default function App() {
         getSongTitle(url);
         setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
+
+        try {
+            const response = await fetch('http://localhost:8000/transcribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            console.log('Transcription started');
+        } catch (error) {
+            console.error('Failed to start transcription:', error);
+        }
     };
 
     const startMatching = async (lyric : string) => {
@@ -438,11 +433,23 @@ export default function App() {
             `,
                                 }}
                                 javaScriptEnabled={true}
-                                onMessage={(event) => {
+                                onMessage={async (event) => {
                                     const currentTime = JSON.parse(event.nativeEvent.data);
                                     if (currentTime === 'video_end') {
                                         console.log('Video ended');
                                         setVideoPlaying(false);
+                                        try {
+                                            await fetch('http://localhost:8000/close_microphone', {
+                                                method: 'GET',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                },
+                                            });
+                                            console.log('Microphone stopped');
+                                        } catch (error) {
+                                            console.error('Failed to stop microphone:', error);
+                                        }
+
                                     } else {
                                         setCurrentTime(currentTime);
                                     }
