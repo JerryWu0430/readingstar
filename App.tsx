@@ -534,7 +534,7 @@ export default function App() {
                                 {score > 0 ? (
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                         You won {score} points!
-                                        You matched {finalScore * 100}% of the lyrics!
+                                        You were {finalScore * 100}% accurate!
                                     </Text>
                                 ) : null}
                             </View>
