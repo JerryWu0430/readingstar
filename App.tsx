@@ -98,7 +98,7 @@ export default function App() {
                         'Content-Type': 'application/json',
                     },
                 });
-                
+ 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -153,6 +153,21 @@ export default function App() {
         }
     };
 
+    const updatePlaylistJson = async (playlist : {id: number, name: string, url: string}[]) => {
+        try {
+            console.log('Updating playlist:', playlistName, "with", playlist);
+            await fetch('http://localhost:8000/update_playlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({"name": playlistName, "songs": playlist}),
+            });
+        } catch (error) {
+            console.error('Error updating playlist:', error);
+        }
+    };
+
     const getSongTitle = async (url : string) => {
         try {
             let title = findFromPlaylist(url).name ?? '';
@@ -169,6 +184,9 @@ export default function App() {
                 }
                 const songItem = {id: playlist.length, name: title, url: url};
                 setPlaylist([...playlist, songItem]);
+                allPlaylists[playlistName] = [...playlist, songItem];
+                setAllPlaylistsGetter(allPlaylists);
+                updatePlaylistJson([...playlist, songItem]);
             }
 
             setScore(0);
