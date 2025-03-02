@@ -99,6 +99,26 @@ def get_playlist():
         allPlaylists = f.read()
     return JSONResponse(content=json.loads(allPlaylists), status_code=200)
 
+# FastAPI endpoint to get the updated playlist
+@app.post('/update_playlist')
+def update_playlist(playlist: dict):
+    """
+    Update a playlist from the app interface.
+    """
+    print(f"Updated playlist songs: {playlist}")
+    with open('playlists.json', 'r') as f:
+        allPlaylists = f.read()
+    allPlaylists = json.loads(allPlaylists)
+    with open('playlists.json', 'w') as f:
+        print(f"Playlists: {allPlaylists}")
+        for pl in allPlaylists["playlists"]:
+            if pl['name'] == playlist['name']:
+                pl['songs'] = playlist['songs']
+            break
+        f.write(json.dumps(allPlaylists, indent=4))
+        f.close()
+    return JSONResponse(content={"message": "Updated playlist successfully."}, status_code=200)
+
 # FastAPI endpoint to update the current lyric and process audio
 @app.post("/update_lyric")
 def update_lyric(phrase: Phrase):
