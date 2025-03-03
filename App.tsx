@@ -13,6 +13,7 @@ import WebView from 'react-native-webview';
 import { SvgXml } from 'react-native-svg';
 import { parseString } from 'react-native-xml2js';
 import he from 'he';
+import { AppState, AppStateStatus } from "react-native";
 
 const menuSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>`;
 const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -23,6 +24,7 @@ const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 2
 
 export default function App() {
     const [score, setScore] = useState(0);
+    const [finalScore, setFinalScore] = useState(0);
     const [selectedSong, setSelectedSong] = useState('');
     const [difficulty, setDifficulty] = useState('Easy');
     const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -89,30 +91,8 @@ export default function App() {
 
     const useMountEffect = (f: () => void) => useEffect(() => { f(); }, []);
 
-    useEffect(() => {
-        const startTranscription = async () => {
-            try {
-                const response = await fetch('http://localhost:8000/transcribe', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
- 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                console.log('Transcription started');
-            } catch (error) {
-                console.error('Failed to start transcription:', error);
-            }
-        };
-    
-        startTranscription();
-    }, []); 
 
-    const getYoutubeEmbedUrl = (url: string): void => {
+    const getYoutubeEmbedUrl = async (url: string): Promise<void> => {
         const videoId: string | undefined = url.split('v=')[1];
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
@@ -120,6 +100,33 @@ export default function App() {
         getSongTitle(url);
         setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
+        try{
+            const response = await fetch('http://localhost:8000/close_microphone', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+        }
+        catch (error) {
+            
+        }
+        try {
+            const response = await fetch('http://localhost:8000/transcribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            console.log('Transcription started');
+        } catch (error) {
+            console.error('Failed to start transcription:', error);
+        }
     };
 
     const startMatching = async (lyric : string) => {
@@ -293,7 +300,7 @@ export default function App() {
                 const subtitleResponse = await fetch(subtitleUrl);
                 const subtitleText = await subtitleResponse.text();
 
-                parseString(subtitleText, (err, result) => {
+                parseString(subtitleText, async (err, result) => {
                     if (err) {
                         console.error('Error parsing XML:', err);
                         return;
@@ -303,6 +310,19 @@ export default function App() {
                         time: parseFloat(item.$.start),
                     }));
                     setLyrics(lyricsArray);
+                    try{
+                        //call Post method full_lyrics to provide lyrics
+                        await fetch('http://localhost:8000/full_lyric', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ lyric: lyricsArray}),
+                        });
+                    }
+                    catch (error) {
+                        console.error('Error setting lyrics:', error);
+                    }
                 });
             }
         } catch (error) {
@@ -341,6 +361,33 @@ export default function App() {
             setScore(prevScore => prevScore + 100);
         }
     }, [showStar]);
+
+    useEffect(() => {
+        const handleAppStateChange = (nextAppState: AppStateStatus) => {
+          console.log("App state changed to:", nextAppState);
+      
+          if (nextAppState === "inactive") {
+            try {
+              fetch("http://localhost:8000/close_microphone", {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              });
+            } catch (error) {
+              console.error("Failed to stop microphone:", error);
+            }
+          }
+        };
+      
+        // Subscribe to app state changes
+        const subscription = AppState.addEventListener("change", handleAppStateChange);
+      
+        // Cleanup function to remove the event listener on unmount
+        return () => {
+          subscription.remove();
+        };
+      }, []);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -486,11 +533,43 @@ export default function App() {
             `,
                                 }}
                                 javaScriptEnabled={true}
-                                onMessage={(event) => {
+                                onMessage={async (event) => {
                                     const currentTime = JSON.parse(event.nativeEvent.data);
                                     if (currentTime === 'video_end') {
                                         console.log('Video ended');
                                         setVideoPlaying(false);
+                                        try {
+                                            await fetch('http://localhost:8000/close_microphone', {
+                                                method: 'GET',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                },
+                                            });
+                                            console.log('Microphone stopped');
+                                        } catch (error) {
+                                            console.error('Failed to stop microphone:', error);
+                                        }
+                                        await new Promise(resolve => setTimeout(resolve, 1000));
+                                        try {
+                                            const response = await fetch('http://localhost:8000/final_score', {
+                                                method: 'GET',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                },
+                                            });
+                                        
+                                            if (!response.ok) {
+                                                throw new Error('Failed to fetch final score');
+                                            }
+                                        
+                                            const data = await response.json(); // Extract JSON response
+                                            setFinalScore(data.final_score); // Store score in state
+                                        
+                                            console.log("Final Score:", data.final_score);
+                                        } catch (error) {
+                                            console.error("Error fetching final score:", error);
+                                        }
+
                                     } else {
                                         setCurrentTime(currentTime);
                                     }
@@ -503,6 +582,7 @@ export default function App() {
                                 {score > 0 ? (
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                         You won {score} points!
+                                        You were {finalScore * 100}% accurate!
                                     </Text>
                                 ) : null}
                             </View>
