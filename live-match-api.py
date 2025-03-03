@@ -15,6 +15,11 @@ import json
 import multiprocessing
 import wave
 import io
+from openvino.runtime import Core
+from optimum.intel.openvino import OVModelForFeatureExtraction
+from transformers import AutoTokenizer
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Set up OpenVINO and device
 device = "CPU"
@@ -57,6 +62,24 @@ prev_prev_verse = ""  # The lyric phrase before the previous one
 data_queue = Queue()
 current_match = {"text": None, "similarity": 0.0}
 source = sr.Microphone(sample_rate=16000)
+
+# model for embedding similarity
+# Load OpenVINO model & tokenizer
+model_id = "sentence-transformers/all-MiniLM-L6-v2"
+ov_model = OVModelForFeatureExtraction.from_pretrained(model_id, export=True)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+def embedding_similarity_ov(text1, text2):
+    # Tokenize input
+    inputs = tokenizer([text1, text2], padding=True, truncation=True, return_tensors="pt")
+
+    # Generate embeddings using OpenVINO
+    with ov_model.device:  # Ensure inference runs on OpenVINO
+        embeddings = ov_model(**inputs).last_hidden_state[:, 0, :].detach().numpy()
+
+    # Compute cosine similarity
+    return cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
+
 
 def record_callback(_, audio: sr.AudioData) -> None:
    data = audio.get_raw_data()
@@ -156,7 +179,9 @@ def final_score():
             recognized_wav = str(genai_result).strip()
     except Exception as e:
         print(f"Error during final transcription: {e}")
-    similarity= SequenceMatcher(None, recognized_wav, full_lyric).ratio()
+    similarity= float(embedding_similarity_ov(full_lyric, recognized_wav))
+    print(f"Final similarity: {similarity}")
+    print("Recognized wav: ", recognized_wav)   
     return JSONResponse(content={"final_score": similarity}, status_code=200)
 
 # FastAPI endpoint to post the playlist from playlists.json
