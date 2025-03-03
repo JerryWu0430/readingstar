@@ -9,3 +9,4 @@ pip install iPython
 pip install pyaudio
 pip install ipywidgets
 pip install sounddevice
+pip install sentence_transformers

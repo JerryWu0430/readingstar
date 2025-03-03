@@ -13,6 +13,13 @@ import uvicorn
 from time import sleep
 import json
 import multiprocessing
+import wave
+import io
+from openvino.runtime import Core
+from optimum.intel.openvino import OVModelForFeatureExtraction
+from transformers import AutoTokenizer
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Set up OpenVINO and device
 device = "CPU"
@@ -56,6 +63,24 @@ data_queue = Queue()
 current_match = {"text": None, "similarity": 0.0}
 source = sr.Microphone(sample_rate=16000)
 
+# model for embedding similarity
+# Load OpenVINO model & tokenizer
+model_id = "sentence-transformers/all-MiniLM-L6-v2"
+ov_model = OVModelForFeatureExtraction.from_pretrained(model_id, export=True)
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+def embedding_similarity_ov(text1, text2):
+    # Tokenize input
+    inputs = tokenizer([text1, text2], padding=True, truncation=True, return_tensors="pt")
+
+    # Generate embeddings using OpenVINO
+    with ov_model.device:  # Ensure inference runs on OpenVINO
+        embeddings = ov_model(**inputs).last_hidden_state[:, 0, :].detach().numpy()
+
+    # Compute cosine similarity
+    return cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
+
+
 def record_callback(_, audio: sr.AudioData) -> None:
    data = audio.get_raw_data()
    data_queue.put(data)
@@ -64,17 +89,19 @@ def record_callback(_, audio: sr.AudioData) -> None:
 class Phrase(BaseModel):
     lyric: str
 
-app = FastAPI()
+class Lyric(BaseModel):
+    lyric: list
 
-# Helper function to find the closest match
-def find_similarity(transcription, lyric):
-    similarity = SequenceMatcher(None, transcription, lyric).ratio()
-    return similarity
+app = FastAPI()
 
 global similarity
 similarity = 0.0
 global recognized_text
 recognized_text = ""
+global stop_call
+stop_call = None
+global stop_flag
+stop_flag = True
 # Transcription process
 @app.post("/transcribe")
 def process_audio():
@@ -82,6 +109,7 @@ def process_audio():
     Record audio, process it, and compare it to the current lyric.
     """
     print("Transcription process started")
+    global stop_call, source
     with source:
         recorder.adjust_for_ambient_noise(source)
     stop_call = recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
@@ -89,24 +117,72 @@ def process_audio():
     global phrase_time
     global phrase_timeout
     global recognized_text
+    global stop_flag
+    stop_flag = False
+    global recorded_audio
+    recorded_audio = io.BytesIO() 
     try:
-        while True:
+        while not stop_flag:
             now = datetime.utcnow()
             if not data_queue.empty():
+                #getting the currently recognized text
                 if phrase_time and now - phrase_time > timedelta(seconds=phrase_timeout):
                     phrase_complete = True
                 phrase_time = now
                 audio_data = b''.join(data_queue.queue)
+                #For recording wav file
+                audio_chunk = data_queue.get()
+                recorded_audio.write(audio_chunk)
                 data_queue.queue.clear()
                 audio_np = np.frombuffer(audio_data, np.int16).astype(np.float32) / 32768.0
                 genai_result = ov_pipe.generate(audio_np)
                 recognized_text = str(genai_result).strip()
                 print(f"Recognized: {recognized_text}")
             else:
-                sleep(0.25)
-
+                sleep(0.1)
+        print("Recording stopped, saving file...")
+        save_audio_to_file(recorded_audio.getvalue())
     except Exception as e:
         print(f"Error during transcription: {e}")
+
+
+@app.get("/close_microphone")
+def close_microphone():
+    global stop_call, stop_flag
+    if stop_call is None:
+        return JSONResponse(content={"message": "Microphone already closed."}, status_code=200)
+    stop_flag = True
+    stop_call()
+    return JSONResponse(content={"message": "Microphone closed."}, status_code=200)
+
+
+def save_audio_to_file(audio_bytes):
+    """ Saves recorded audio to a WAV file """
+    print("Saving recorded audio...")
+    with wave.open("recorded_audio.wav", "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(16000)
+        wf.writeframes(audio_bytes)
+    print("Audio saved successfully as recorded_audio.wav!")
+
+@app.get("/final_score")
+def final_score():
+    #transcribe the recorded_audio.wav file
+    recognized_wav = None
+    global full_lyric
+    try:
+        with wave.open("recorded_audio.wav", "rb") as wf:
+            audio_data = wf.readframes(wf.getnframes())
+            audio_np = np.frombuffer(audio_data, np.int16).astype(np.float32) / 32768.0
+            genai_result = ov_pipe.generate(audio_np)
+            recognized_wav = str(genai_result).strip()
+    except Exception as e:
+        print(f"Error during final transcription: {e}")
+    similarity= float(embedding_similarity_ov(full_lyric, recognized_wav))
+    print(f"Final similarity: {similarity}")
+    print("Recognized wav: ", recognized_wav)   
+    return JSONResponse(content={"final_score": similarity}, status_code=200)
 
 # FastAPI endpoint to post the playlist from playlists.json
 @app.get('/playlists')
@@ -114,7 +190,7 @@ def get_playlist():
     """
     Post the playlist from playlist.json.
     """
-    playlists_path = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), 'playlists.json', 'playlists.json')
+    playlists_path = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), 'playlists.json')
     
     with open(playlists_path, 'r') as f:
         allPlaylists = f.read()
@@ -136,6 +212,17 @@ def update_lyric(phrase: Phrase):
         content={"message": f"Updated current lyric to: '{current_verse}' and processed audio."}, 
         status_code=200
     )
+
+full_lyric = ""
+lyric_array = []
+@app.post("/full_lyric")
+def full_lyric(request: Lyric):
+    global full_lyric
+    global lyric_array
+    lyric_array = request.lyric
+    full_lyric = " ".join([entry["lyric"] for entry in lyric_array])
+    print(f"Received full lyric: {full_lyric}")
+    return JSONResponse(content={"message": "Received full lyric."}, status_code=200)
 
 # FastAPI endpoint to get the current match result
 @app.get("/match")
