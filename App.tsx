@@ -81,7 +81,6 @@ export default function App() {
             }
             setAllPlaylistNames(Object.keys(allPlaylists));
             setPlaylistLoaded(true);
-            console.log('Playlists loaded:', allPlaylists);
         });
     };
 
@@ -252,10 +251,8 @@ export default function App() {
             setPlaylistName(playlistName);
             setPlaylist(allPlaylistsGetter[playlistName]);
             console.log('Switching playlist:', playlistName);
-            console.log('Playlist:', allPlaylistsGetter[playlistName]);
             setPlaylistLoaded(true);
         } else {
-            console.log('All playlists:', allPlaylistsGetter);
             console.log('Playlist not found:', playlistName);
         }
     }

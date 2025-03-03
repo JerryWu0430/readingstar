@@ -196,7 +196,7 @@ def get_playlist():
         allPlaylists = f.read()
     return JSONResponse(content=json.loads(allPlaylists), status_code=200)
 
-# FastAPI endpoint to get the updated playlist
+# FastAPI endpoint for updating playlist JSON
 @app.post('/update_playlist')
 def update_playlist(playlist: dict):
     """
