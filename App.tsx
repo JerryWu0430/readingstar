@@ -162,11 +162,42 @@ export default function App() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({"name": playlistName, "songs": playlist}),
+                body: JSON.stringify({"name": playlistName, "songs": playlist, "action": "update"}),
             });
         } catch (error) {
             console.error('Error updating playlist:', error);
         }
     };
+
+    const removePlaylistJson = async (playlistName: string) => {
+        try {
+            console.log('Removing playlist:', playlistName);
+            await fetch('http://localhost:8000/remove_playlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({"name": playlistName, "action": "remove"}),
+            });
+        } catch (error) {
+            console.error('Error removing playlist:', error);
+        }
+    };
+
+    const createPlaylistJson = async (playlistName: string) => {
+        try {
+            console.log('Creating playlist:', playlistName);
+            await fetch('http://localhost:8000/create_playlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({"id": allPlaylistsGetter.length, "name": playlistName, "songs": [], "action": "create"}),
+            });
+        } catch (error) {
+            console.error('Error creating playlist:', error);
+        }
+    }
 
     const getSongTitle = async (url : string) => {
         try {
