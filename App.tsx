@@ -161,7 +161,6 @@ export default function App() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({"name": playlistName, "songs": playlist}),
                 body: JSON.stringify({"name": playlistName, "songs": playlist, "action": "update"}),
             });
         } catch (error) {
@@ -537,7 +536,28 @@ export default function App() {
                                         styles.submitButton,
                                         (pressed || name == playlistName) && { backgroundColor: '#00b533' },
                                     ]}
-                                    onPress={() => switchPlaylist(name)}>
+                                    onPress={() => switchPlaylist(name)}
+                                    /*
+                                        onLongPress={() => {
+                                            // rename playlist logic
+                                            // seems like we will have text input that
+                                            // is normally readonly, but editable when long pressed
+                                            const newName = prompt('Enter new playlist name:', name);
+                                            if (newName) {
+                                                const updatedPlaylists = { ...allPlaylistsGetter };
+                                                updatedPlaylists[newName] = updatedPlaylists[name];
+                                                delete updatedPlaylists[name];
+                                                setAllPlaylistsGetter(updatedPlaylists);
+                                                setAllPlaylistNames(Object.keys(updatedPlaylists));
+                                                if (playlistName === name) {
+                                                    setPlaylistName(newName);
+                                                    setPlaylist(updatedPlaylists[newName]);
+                                                }
+                                                updatePlaylistJson(updatedPlaylists[newName]);
+                                                removePlaylistJson(name);
+                                            }
+                                        }}
+                                    */>
                                     <Text
                                         style={[styles.buttonText]}
                                     >
@@ -633,25 +653,27 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     playlistTitle: {
-        fontSize: 16,
+        fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 16,
         color: '#444',
     },
     playlistItem: {
+        backgroundColor: '#e8f4ff',
+        fontSize: 16,
         padding: 8,
         borderRadius: 4,
         marginBottom: 4,
     },
     playlistItemSelected: {
-        backgroundColor: '#e8f4ff',
+        backgroundColor: '#00008B',
     },
     playlistItemText: {
         fontSize: 14,
         color: '#333',
     },
     playlistItemTextSelected: {
-        color: '#333',
+        color: '#FAF9F6',
         fontWeight: 'bold',
     },
     mainContent: {
@@ -660,7 +682,7 @@ const styles = StyleSheet.create({
         minWidth: 500, // Add fixed min width
     },
     scoreContainer: {
-        backgroundColor: '#e8f4ff',
+        backgroundColor: '#005bb5',
         padding: 16,
         borderRadius: 8,
         borderWidth: 1,
@@ -675,7 +697,7 @@ const styles = StyleSheet.create({
     scoreText: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#005bb5',
+        color: '#FAF9F6',
     },
     videoContainer: {
         aspectRatio: 16 / 9,
@@ -723,8 +745,7 @@ const styles = StyleSheet.create({
         color: '#005bb5',
     },
     rightPanel: {
-        flex: 1,
-        width: 200,
+        width: 250,
         padding: 16,
         backgroundColor: '#ffffff',
         borderLeftWidth: 1,
@@ -747,7 +768,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     sectionTitle: {
-        fontSize: 16,
+        fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 8,
         color: '#444',
