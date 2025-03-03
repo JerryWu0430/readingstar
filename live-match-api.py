@@ -105,19 +105,38 @@ def update_playlist(playlist: dict):
     """
     Update a playlist from the app interface.
     """
-    print(f"Updated playlist songs: {playlist}")
     with open('playlists.json', 'r') as f:
         allPlaylists = f.read()
     allPlaylists = json.loads(allPlaylists)
-    with open('playlists.json', 'w') as f:
+    action = playlist.pop('action', None)
+
+    # check if this is a delete request
+    if action == "delete":
+        with open('playlists.json', 'w') as f:
+            print(f"Playlists: {allPlaylists}")
+            for pl in allPlaylists["playlists"]:
+                if pl['name'] == playlist['name']:
+                    allPlaylists["playlists"].remove(pl)
+                break
+    
+    # check if this is an add request
+    elif action == "create":
+        if playlist['name'] not in [pl['name'] for pl in allPlaylists["playlists"]]:
+            allPlaylists["playlists"].append(playlist)
+
+    # update the playlist
+    elif action == "update":
         print(f"Playlists: {allPlaylists}")
         for pl in allPlaylists["playlists"]:
             if pl['name'] == playlist['name']:
                 pl['songs'] = playlist['songs']
             break
+
+    with open('playlists.json', 'w') as f:
         f.write(json.dumps(allPlaylists, indent=4))
         f.close()
-    return JSONResponse(content={"message": "Updated playlist successfully."}, status_code=200)
+    
+    return JSONResponse(content={"message": f"{action} completed."}, status_code=200)
 
 # FastAPI endpoint to update the current lyric and process audio
 @app.post("/update_lyric")
