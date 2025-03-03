@@ -204,30 +204,33 @@ def update_playlist(playlist: dict):
     """
     with open('playlists.json', 'r') as f:
         allPlaylists = f.read()
+    
     allPlaylists = json.loads(allPlaylists)
+    print(f"\nUpdating playlist: {playlist}")
     action = playlist.pop('action', None)
 
     # check if this is a delete request
     if action == "delete":
         with open('playlists.json', 'w') as f:
-            print(f"Playlists: {allPlaylists}")
             for pl in allPlaylists["playlists"]:
                 if pl['name'] == playlist['name']:
                     allPlaylists["playlists"].remove(pl)
-                break
+                    print(f"Deleted playlist: {playlist}")
+                    break
     
     # check if this is an add request
     elif action == "create":
         if playlist['name'] not in [pl['name'] for pl in allPlaylists["playlists"]]:
             allPlaylists["playlists"].append(playlist)
+            print(f"Added playlist: {playlist}")
 
     # update the playlist
     elif action == "update":
-        print(f"Playlists: {allPlaylists}")
         for pl in allPlaylists["playlists"]:
             if pl['name'] == playlist['name']:
                 pl['songs'] = playlist['songs']
-            break
+                print("Updated playlist: ", pl)
+                break
 
     with open('playlists.json', 'w') as f:
         f.write(json.dumps(allPlaylists, indent=4))

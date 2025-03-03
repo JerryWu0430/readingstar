@@ -67,6 +67,7 @@ export default function App() {
                 playlistName ?? setPlaylistName(Object.keys(allPlaylists)[0]);
                 setPlaylist(allPlaylists[playlistName]);
                 setAllPlaylistsGetter(allPlaylists);
+                console.log('Playlists loaded:', allPlaylists);
                 resolve();
             } catch (error) {
                 allPlaylists['Nursery Rhymes OG'] = [
@@ -223,6 +224,7 @@ export default function App() {
                 allPlaylists[playlistName] = [...playlist, songItem];
                 setAllPlaylistsGetter(allPlaylists);
                 updatePlaylistJson([...playlist, songItem]);
+                fetchPlaylists();
             }
 
             setScore(0);
