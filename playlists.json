@@ -33,6 +33,11 @@
                     "id": 5,
                     "name": "Hush Little Baby",
                     "url": "https://www.youtube.com/watch?v=f_raDpgx_3M"
+                },
+                {
+                    "id": 6,
+                    "name": "Bruno Mars - Grenade (Audio)",
+                    "url": "https://www.youtube.com/watch?v=LAW5JibpkTY"
                 }
             ]
         },
@@ -69,13 +74,13 @@
                     "id": 5,
                     "name": "ABC Song",
                     "url": "https://www.youtube.com/watch?v=ccEpTTZW34g"
-                },
-                {
-                    "id": 6,
-                    "name": "Happy by Pharrell Williams",
-                    "url": ""
                 }
             ]
+        },
+        {
+            "id": 9,
+            "name": "Richard Cloudesley School",
+            "songs": []
         },
         {
             "id": 2,

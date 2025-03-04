@@ -210,12 +210,20 @@ def update_playlist(playlist: dict):
     action = playlist.pop('action', None)
 
     # check if this is a delete request
-    if action == "delete":
+    if action == "remove":
         with open('playlists.json', 'w') as f:
             for pl in allPlaylists["playlists"]:
                 if pl['name'] == playlist['name']:
-                    allPlaylists["playlists"].remove(pl)
-                    print(f"Deleted playlist: {playlist}")
+                    song = playlist.pop('song', None)
+                    if song:
+                        for s in pl['songs']:
+                            if s["name"] == song:
+                                pl['songs'].remove(s)
+                                print(f"Deleted song: {song}")
+                                break
+                    else:
+                        allPlaylists["playlists"].remove(pl)
+                        print(f"Deleted playlist: {playlist}")
                     break
     
     # check if this is an add request

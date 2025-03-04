@@ -32,7 +32,7 @@ export default function App() {
     const [lyrics, setLyrics] = useState([]);
     const [currentLyric, setCurrentLyric] = useState('');
     const [inputUrl, setInputUrl] = useState('');
-    const [currentTime, setCurrentTime] = useState(0);
+    const [currentTime, setCurrentTime] = useState(-1);
     const [songTitle, setSongTitle] = useState('');
     const colorScheme = useColorScheme();
     const timerRef = useRef(null);
@@ -96,7 +96,7 @@ export default function App() {
         const videoId: string | undefined = url.split('v=')[1];
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
-        setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}?autoplay=1&controls=0`);
+        setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}?autoplay=1&controls=0&encrypted-media=1`);
         getSongTitle(url);
         setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
@@ -175,15 +175,15 @@ export default function App() {
         }
     };
 
-    const removePlaylistJson = async (playlistName: string) => {
+    const removePlaylistJson = async (playlistName: string, song: string) => {
         try {
             console.log('Removing playlist:', playlistName);
-            await fetch('http://localhost:8000/remove_playlist', {
+            await fetch('http://localhost:8000/update_playlist', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({"name": playlistName, "action": "remove"}),
+                body: JSON.stringify({"name": playlistName, "song": song, "action": "remove"}),
             });
         } catch (error) {
             console.error('Error removing playlist:', error);
@@ -193,7 +193,7 @@ export default function App() {
     const createPlaylistJson = async (playlistName: string) => {
         try {
             console.log('Creating playlist:', playlistName);
-            await fetch('http://localhost:8000/create_playlist', {
+            await fetch('http://localhost:8000/update_playlist', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -203,6 +203,10 @@ export default function App() {
         } catch (error) {
             console.error('Error creating playlist:', error);
         }
+    }
+
+    const songInPlaylist = (song: string) => {
+        return playlist.find((item) => item.name === song) ? true : false;
     }
 
     const getSongTitle = async (url : string) => {
@@ -500,6 +504,7 @@ export default function App() {
                           height: '100%',
                           width: '100%',
                           videoId: '${youtubeUrl.split('v=')[1]}',
+                          useLocalHtml: false,
                           playerVars: {
                             'playsinline': 1
                           },
@@ -522,8 +527,13 @@ export default function App() {
                       function onPlayerStateChange(event) {
                         if (event.data == YT.PlayerState.PLAYING) {
                           // Handle player state change
+                        } else if (event.data == YT.PlayerState.PAUSED) {
+                          window.ReactNativeWebView.postMessage(JSON.stringify('video_pause'));
                         } else if (event.data == YT.PlayerState.ENDED) {
                           window.ReactNativeWebView.postMessage(JSON.stringify('video_end'));
+                        } else {
+                          // Handle other states
+                          window.ReactNativeWebView.postMessage(JSON.stringify(event.data));
                         }
                       }
                     </script>
@@ -533,8 +543,8 @@ export default function App() {
                                 }}
                                 javaScriptEnabled={true}
                                 onMessage={async (event) => {
-                                    const currentTime = JSON.parse(event.nativeEvent.data);
-                                    if (currentTime === 'video_end') {
+                                    const cTime = JSON.parse(event.nativeEvent.data);
+                                    if (cTime === 'video_end') {
                                         console.log('Video ended');
                                         setVideoPlaying(false);
                                         try {
@@ -570,7 +580,13 @@ export default function App() {
                                         }
 
                                     } else {
-                                        setCurrentTime(currentTime);
+                                        /*if (cTime === currentTime) {
+                                            if (songInPlaylist(selectedSong)) {
+                                                removePlaylistJson(playlistName, selectedSong);
+                                                fetchPlaylists();
+                                            }
+                                        }*/
+                                        setCurrentTime(cTime);
                                     }
                                 }}
                             />) : 
