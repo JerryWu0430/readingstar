@@ -33,11 +33,57 @@
                     "id": 5,
                     "name": "Hush Little Baby",
                     "url": "https://www.youtube.com/watch?v=f_raDpgx_3M"
+                },
+                {
+                    "id": 6,
+                    "name": "Bruno Mars - Grenade (Audio)",
+                    "url": "https://www.youtube.com/watch?v=LAW5JibpkTY"
                 }
             ]
         },
         {
             "id": 1,
+            "name": "Helen Allison School",
+            "songs": [
+                {
+                    "id": 0,
+                    "name": "Hello Song for Kids (Singing Walrus)",
+                    "url": "https://www.youtube.com/watch?v=gghDRJVxFxU"
+                },
+                {
+                    "id": 1,
+                    "name": "Old MacDonald",
+                    "url": "https://www.youtube.com/watch?v=_6HzoUcx3eo"
+                },
+                {
+                    "id": 2,
+                    "name": "Baby Shark",
+                    "url": "https://www.youtube.com/watch?v=GR2o6k8aPlI"
+                },
+                {
+                    "id": 3,
+                    "name": "5 Little Speckled Frogs",
+                    "url": "https://www.youtube.com/watch?v=8VCpa4blanQ"
+                },
+                {
+                    "id": 4,
+                    "name": "Twinkle, Twinkle...",
+                    "url": "https://www.youtube.com/watch?v=yCjJyiqpAuU"
+                },
+                {
+                    "id": 5,
+                    "name": "ABC Song",
+                    "url": "https://www.youtube.com/watch?v=ccEpTTZW34g"
+                }
+            ]
+        },
+        {
+            "id": 9,
+            "name": "Richard Cloudesley School",
+            "songs": []
+        },
+        {
+            "id": 2,
             "name": "Disney Songs",
             "songs": [
                 {
@@ -48,29 +94,28 @@
                 {
                     "id": 1,
                     "name": "You're Welcome | Moana",
-                    "url": "https://www.youtube.com/watch?v=8D74hdVkqxU"
+                    "url": "https://www.youtube.com/watch?v=y5dpfFfcQ3E"
                 },
                 {
                     "id": 2,
-                    "name": "I'll Make A Man Out of You | Mulan",
-                    "url": "https://www.youtube.com/watch?v=nExOFS6ZjeU"
+                    "name": "Almost There | The Princess and the Frog",
+                    "url": "https://www.youtube.com/watch?v=6F-w6Ne9iBE"
                 },
                 {
                     "id": 3,
-                    "name": "Under the Sea | The Little Mermaid",
-                    "url": "https://www.youtube.com/watch?v=rtFFcErWMlE"
+                    "name": "A Whole New World | Aladdin",
+                    "url": "https://www.youtube.com/watch?v=4SVSxfTRc2M"
                 },
                 {
                     "id": 4,
-                    "name": "Almost There | The Princess and the Frog",
-                    "url": "https://www.youtube.com/watch?v=HlSU00RbqR8"
+                    "name": "Colours of the Wind | Pocahontas",
+                    "url": "https://www.youtube.com/watch?v=nI9BkfcZAMA"
                 }
-
             ]
         },
         {
-            "id": 2,
-            "name": "Easy",
+            "id": 3,
+            "name": "Starter",
             "songs": [
                 {
                     "id": 0,
@@ -80,8 +125,8 @@
             ]
         },
         {
-            "id": 3,
-            "name": "Medium",
+            "id": 4,
+            "name": "Challenge",
             "songs": [
                 {
                     "id": 1,
@@ -91,8 +136,8 @@
             ]
         },
         {
-            "id": 4,
-            "name": "Hard",
+            "id": 5,
+            "name": "Ultimate",
             "songs": [
                 {
                     "id": 2,
@@ -100,6 +145,21 @@
                     "url": "https://www.youtube.com/watch?v=EHaoEKcuX0g"
                 }
             ]
+        },
+        {
+            "id": 6,
+            "name": "Playlist 1",
+            "songs": []
+        },
+        {
+            "id": 7,
+            "name": "Playlist 2",
+            "songs": []
+        },
+        {
+            "id": 8,
+            "name": "Playlist 3",
+            "songs": []
         }
     ]
 }

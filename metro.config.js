@@ -8,6 +8,8 @@ const rnwPath = fs.realpathSync(
   path.resolve(require.resolve('react-native-windows/package.json'), '..'),
 );
 
+//
+
 /**
  * Metro configuration
  * https://facebook.github.io/metro/docs/configuration
@@ -16,6 +18,7 @@ const rnwPath = fs.realpathSync(
  */
 
 const config = {
+  //
   resolver: {
     blockList: exclusionList([
       // This stops "npx @react-native-community/cli run-windows" from causing the metro server to crash if its already running
@@ -27,8 +30,7 @@ const config = {
       new RegExp(`${rnwPath}/target/.*`),
       /.*\.ProjectImports\.zip/,
     ]),
-    assetExts: getDefaultConfig(__dirname).resolver.assetExts.filter(ext => ext !== 'svg'),
-    sourceExts: [...getDefaultConfig(__dirname).resolver.sourceExts, 'svg'],
+    //
   },
   transformer: {
     getTransformOptions: async () => ({
@@ -37,7 +39,6 @@ const config = {
         inlineRequires: true,
       },
     }),
-    babelTransformerPath: require.resolve('react-native-svg-transformer'),
   },
 };
 

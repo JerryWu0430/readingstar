@@ -32,7 +32,7 @@ export default function App() {
     const [lyrics, setLyrics] = useState([]);
     const [currentLyric, setCurrentLyric] = useState('');
     const [inputUrl, setInputUrl] = useState('');
-    const [currentTime, setCurrentTime] = useState(0);
+    const [currentTime, setCurrentTime] = useState(-1);
     const [songTitle, setSongTitle] = useState('');
     const colorScheme = useColorScheme();
     const timerRef = useRef(null);
@@ -67,6 +67,7 @@ export default function App() {
                 playlistName ?? setPlaylistName(Object.keys(allPlaylists)[0]);
                 setPlaylist(allPlaylists[playlistName]);
                 setAllPlaylistsGetter(allPlaylists);
+                console.log('Playlists loaded:', allPlaylists);
                 resolve();
             } catch (error) {
                 allPlaylists['Nursery Rhymes OG'] = [
@@ -81,7 +82,6 @@ export default function App() {
             }
             setAllPlaylistNames(Object.keys(allPlaylists));
             setPlaylistLoaded(true);
-            console.log('Playlists loaded:', allPlaylists);
         });
     };
 
@@ -89,14 +89,14 @@ export default function App() {
         return playlist.find((item) => item.url === url) ?? {};
     }
 
-    const useMountEffect = (f: () => void) => useEffect(f, []);
+    const useMountEffect = (f: () => void) => useEffect(() => { f(); }, []);
 
 
     const getYoutubeEmbedUrl = async (url: string): Promise<void> => {
         const videoId: string | undefined = url.split('v=')[1];
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
-        setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}?autoplay=1&controls=0`);
+        setEmbedUrl(`https://www.youtube.com/embed/${finalVideoId}?autoplay=1&controls=0&encrypted-media=1`);
         getSongTitle(url);
         setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
@@ -160,6 +160,55 @@ export default function App() {
         }
     };
 
+    const updatePlaylistJson = async (playlist : {id: number, name: string, url: string}[]) => {
+        try {
+            console.log('Updating playlist:', playlistName, "with", playlist);
+            await fetch('http://localhost:8000/update_playlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({"name": playlistName, "songs": playlist, "action": "update"}),
+            });
+        } catch (error) {
+            console.error('Error updating playlist:', error);
+        }
+    };
+
+    const removePlaylistJson = async (playlistName: string, song: string) => {
+        try {
+            console.log('Removing playlist:', playlistName);
+            await fetch('http://localhost:8000/update_playlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({"name": playlistName, "song": song, "action": "remove"}),
+            });
+        } catch (error) {
+            console.error('Error removing playlist:', error);
+        }
+    };
+
+    const createPlaylistJson = async (playlistName: string) => {
+        try {
+            console.log('Creating playlist:', playlistName);
+            await fetch('http://localhost:8000/update_playlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({"id": allPlaylistsGetter.length, "name": playlistName, "songs": [], "action": "create"}),
+            });
+        } catch (error) {
+            console.error('Error creating playlist:', error);
+        }
+    }
+
+    const songInPlaylist = (song: string) => {
+        return playlist.find((item) => item.name === song) ? true : false;
+    }
+
     const getSongTitle = async (url : string) => {
         try {
             let title = findFromPlaylist(url).name ?? '';
@@ -176,6 +225,10 @@ export default function App() {
                 }
                 const songItem = {id: playlist.length, name: title, url: url};
                 setPlaylist([...playlist, songItem]);
+                allPlaylists[playlistName] = [...playlist, songItem];
+                setAllPlaylistsGetter(allPlaylists);
+                updatePlaylistJson([...playlist, songItem]);
+                fetchPlaylists();
             }
 
             setScore(0);
@@ -204,10 +257,8 @@ export default function App() {
             setPlaylistName(playlistName);
             setPlaylist(allPlaylistsGetter[playlistName]);
             console.log('Switching playlist:', playlistName);
-            console.log('Playlist:', allPlaylistsGetter[playlistName]);
             setPlaylistLoaded(true);
         } else {
-            console.log('All playlists:', allPlaylistsGetter);
             console.log('Playlist not found:', playlistName);
         }
     }
@@ -453,6 +504,7 @@ export default function App() {
                           height: '100%',
                           width: '100%',
                           videoId: '${youtubeUrl.split('v=')[1]}',
+                          useLocalHtml: false,
                           playerVars: {
                             'playsinline': 1
                           },
@@ -475,8 +527,13 @@ export default function App() {
                       function onPlayerStateChange(event) {
                         if (event.data == YT.PlayerState.PLAYING) {
                           // Handle player state change
+                        } else if (event.data == YT.PlayerState.PAUSED) {
+                          window.ReactNativeWebView.postMessage(JSON.stringify('video_pause'));
                         } else if (event.data == YT.PlayerState.ENDED) {
                           window.ReactNativeWebView.postMessage(JSON.stringify('video_end'));
+                        } else {
+                          // Handle other states
+                          window.ReactNativeWebView.postMessage(JSON.stringify(event.data));
                         }
                       }
                     </script>
@@ -486,8 +543,8 @@ export default function App() {
                                 }}
                                 javaScriptEnabled={true}
                                 onMessage={async (event) => {
-                                    const currentTime = JSON.parse(event.nativeEvent.data);
-                                    if (currentTime === 'video_end') {
+                                    const cTime = JSON.parse(event.nativeEvent.data);
+                                    if (cTime === 'video_end') {
                                         console.log('Video ended');
                                         setVideoPlaying(false);
                                         try {
@@ -523,13 +580,19 @@ export default function App() {
                                         }
 
                                     } else {
-                                        setCurrentTime(currentTime);
+                                        /*if (cTime === currentTime) {
+                                            if (songInPlaylist(selectedSong)) {
+                                                removePlaylistJson(playlistName, selectedSong);
+                                                fetchPlaylists();
+                                            }
+                                        }*/
+                                        setCurrentTime(cTime);
                                     }
                                 }}
                             />) : 
                             (<View style={styles.overlay}>
                                 <Text style={{ fontSize: 20, textAlign: 'center' }}>
-                                    Well done for completing the song {songTitle}!
+                                    Well done for completing the song "{songTitle}"!
                                 </Text>
                                 {score > 0 ? (
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
@@ -561,13 +624,41 @@ export default function App() {
                         <Text style={styles.sectionTitle}>Playlists</Text>
                         <ScrollView>
                             {allPlaylistNames.map(name => (
-                                <Text
+                                <Pressable
                                     key={name}
-                                    style={[styles.difficultyOption, { color: name === playlistName ? '#005bb5' : '#333' }]}
+                                    style={({ pressed }) => [
+                                        styles.button,
+                                        styles.submitButton,
+                                        (pressed || name == playlistName) && { backgroundColor: '#00b533' },
+                                    ]}
                                     onPress={() => switchPlaylist(name)}
-                                >
-                                    {name}
-                                </Text>
+                                    /*
+                                        onLongPress={() => {
+                                            // rename playlist logic
+                                            // seems like we will have text input that
+                                            // is normally readonly, but editable when long pressed
+                                            const newName = prompt('Enter new playlist name:', name);
+                                            if (newName) {
+                                                const updatedPlaylists = { ...allPlaylistsGetter };
+                                                updatedPlaylists[newName] = updatedPlaylists[name];
+                                                delete updatedPlaylists[name];
+                                                setAllPlaylistsGetter(updatedPlaylists);
+                                                setAllPlaylistNames(Object.keys(updatedPlaylists));
+                                                if (playlistName === name) {
+                                                    setPlaylistName(newName);
+                                                    setPlaylist(updatedPlaylists[newName]);
+                                                }
+                                                updatePlaylistJson(updatedPlaylists[newName]);
+                                                removePlaylistJson(name);
+                                            }
+                                        }}
+                                    */>
+                                    <Text
+                                        style={[styles.buttonText]}
+                                    >
+                                        {name}
+                                    </Text>
+                                </Pressable>
                             ))}
                         </ScrollView>
                     </View>
@@ -657,25 +748,27 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     playlistTitle: {
-        fontSize: 16,
+        fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 16,
         color: '#444',
     },
     playlistItem: {
+        backgroundColor: '#e8f4ff',
+        fontSize: 16,
         padding: 8,
         borderRadius: 4,
         marginBottom: 4,
     },
     playlistItemSelected: {
-        backgroundColor: '#e8f4ff',
+        backgroundColor: '#00008B',
     },
     playlistItemText: {
         fontSize: 14,
         color: '#333',
     },
     playlistItemTextSelected: {
-        color: '#333',
+        color: '#FAF9F6',
         fontWeight: 'bold',
     },
     mainContent: {
@@ -684,7 +777,7 @@ const styles = StyleSheet.create({
         minWidth: 500, // Add fixed min width
     },
     scoreContainer: {
-        backgroundColor: '#e8f4ff',
+        backgroundColor: '#005bb5',
         padding: 16,
         borderRadius: 8,
         borderWidth: 1,
@@ -699,7 +792,7 @@ const styles = StyleSheet.create({
     scoreText: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#005bb5',
+        color: '#FAF9F6',
     },
     videoContainer: {
         aspectRatio: 16 / 9,
@@ -747,7 +840,7 @@ const styles = StyleSheet.create({
         color: '#005bb5',
     },
     rightPanel: {
-        width: 200,
+        width: 250,
         padding: 16,
         backgroundColor: '#ffffff',
         borderLeftWidth: 1,
@@ -770,7 +863,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     sectionTitle: {
-        fontSize: 16,
+        fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 8,
         color: '#444',
@@ -795,6 +888,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
         color: '#fff',
+        textAlign: 'center'
     },
     submitButton: {
         backgroundColor: '#0078d4',

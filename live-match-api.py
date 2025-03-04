@@ -196,6 +196,56 @@ def get_playlist():
         allPlaylists = f.read()
     return JSONResponse(content=json.loads(allPlaylists), status_code=200)
 
+# FastAPI endpoint for updating playlist JSON
+@app.post('/update_playlist')
+def update_playlist(playlist: dict):
+    """
+    Update a playlist from the app interface.
+    """
+    with open('playlists.json', 'r') as f:
+        allPlaylists = f.read()
+    
+    allPlaylists = json.loads(allPlaylists)
+    print(f"\nUpdating playlist: {playlist}")
+    action = playlist.pop('action', None)
+
+    # check if this is a delete request
+    if action == "remove":
+        with open('playlists.json', 'w') as f:
+            for pl in allPlaylists["playlists"]:
+                if pl['name'] == playlist['name']:
+                    song = playlist.pop('song', None)
+                    if song:
+                        for s in pl['songs']:
+                            if s["name"] == song:
+                                pl['songs'].remove(s)
+                                print(f"Deleted song: {song}")
+                                break
+                    else:
+                        allPlaylists["playlists"].remove(pl)
+                        print(f"Deleted playlist: {playlist}")
+                    break
+    
+    # check if this is an add request
+    elif action == "create":
+        if playlist['name'] not in [pl['name'] for pl in allPlaylists["playlists"]]:
+            allPlaylists["playlists"].append(playlist)
+            print(f"Added playlist: {playlist}")
+
+    # update the playlist
+    elif action == "update":
+        for pl in allPlaylists["playlists"]:
+            if pl['name'] == playlist['name']:
+                pl['songs'] = playlist['songs']
+                print("Updated playlist: ", pl)
+                break
+
+    with open('playlists.json', 'w') as f:
+        f.write(json.dumps(allPlaylists, indent=4))
+        f.close()
+    
+    return JSONResponse(content={"message": f"{action} completed."}, status_code=200)
+
 # FastAPI endpoint to update the current lyric and process audio
 @app.post("/update_lyric")
 def update_lyric(phrase: Phrase):
