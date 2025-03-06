@@ -597,7 +597,7 @@ export default function App() {
                                 {score > 0 ? (
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                         You won {score} points!
-                                        You were {finalScore * 100}% accurate!
+                                        You were {Math.round(finalScore * 100)}% accurate!
                                     </Text>
                                 ) : null}
                             </View>
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     lyricsText: {
-        fontSize: 24,
+        fontSize: 32,
         color: '#005bb5',
     },
     rightPanel: {
