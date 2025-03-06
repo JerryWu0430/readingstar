@@ -8,6 +8,7 @@ import {
     SafeAreaView,
     TextInput,
     useColorScheme,
+    Animated,
 } from 'react-native';
 import WebView from 'react-native-webview';
 import { SvgXml } from 'react-native-svg';
@@ -390,7 +391,25 @@ export default function App() {
         return () => {
           subscription.remove();
         };
-      }, []);
+    }, []);
+
+    const animatedValue = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (currentLyric) {
+            const currentIndex = lyrics.findIndex(lyric => lyric.lyric === currentLyric);
+            const nextLyric = lyrics[currentIndex + 1];
+            const duration = nextLyric ? (nextLyric.time - lyrics[currentIndex].time) * 1000 : 2000;
+
+            Animated.timing(animatedValue, {
+                toValue: 1,
+                duration: duration,
+                useNativeDriver: false,
+            }).start(() => {
+                animatedValue.setValue(0);
+            });
+        }
+    }, [currentLyric]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -615,7 +634,19 @@ export default function App() {
 
                     <View style={styles.lyricsContainer}>
                         <Text style={styles.lyricsText}>{currentLyric}</Text>
-                        <SvgXml xml={microphoneSvg} width={32} height={32} />
+                        <View style={styles.slidingBarContainer}>
+                            <Animated.View
+                                style={[
+                                    styles.slidingBar,
+                                    {
+                                        width: animatedValue.interpolate({
+                                            inputRange: [0, 1],
+                                            outputRange: ['0%', '100%'],
+                                        }),
+                                    },
+                                ]}
+                            />
+                        </View>
                     </View>
                 </View>
 
@@ -940,6 +971,19 @@ const styles = StyleSheet.create({
     },
     star: {
         opacity: 1, // Optional styling for animation
+    },
+    slidingBarContainer: {
+        width: '100%',
+        maxWidth: 500,
+        height: 5,
+        backgroundColor: 'transparent',
+        overflow: 'hidden',
+        alignItems: 'center',
+    },
+    slidingBar: {
+        height: 5,
+        backgroundColor: '#FFD700',
+        alignSelf: 'flex-start',
     },
 });
 

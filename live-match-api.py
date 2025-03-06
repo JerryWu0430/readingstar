@@ -20,6 +20,8 @@ from optimum.intel.openvino import OVModelForFeatureExtraction
 from transformers import AutoTokenizer
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import normalize
+import torch
 
 # Set up OpenVINO and device
 device = "CPU"
@@ -64,20 +66,20 @@ current_match = {"text": None, "similarity": 0.0}
 source = sr.Microphone(sample_rate=16000)
 
 # model for embedding similarity
-# Load OpenVINO model & tokenizer
+# Load model & tokenizer
 model_id = "sentence-transformers/all-MiniLM-L6-v2"
 ov_model = OVModelForFeatureExtraction.from_pretrained(model_id, export=True)
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 
 def embedding_similarity_ov(text1, text2):
-    # Tokenize input
     inputs = tokenizer([text1, text2], padding=True, truncation=True, return_tensors="pt")
 
-    # Generate embeddings using OpenVINO
-    with ov_model.device:  # Ensure inference runs on OpenVINO
-        embeddings = ov_model(**inputs).last_hidden_state[:, 0, :].detach().numpy()
+    with torch.no_grad(): 
+        outputs = ov_model(**inputs)
 
-    # Compute cosine similarity
+    embeddings = outputs.last_hidden_state.mean(dim=1).detach().numpy()
+
+    embeddings = normalize(embeddings, axis=1)
     return cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
 
 
