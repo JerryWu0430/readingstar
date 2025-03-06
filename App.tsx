@@ -694,7 +694,7 @@ export default function App() {
                         </ScrollView>
                     </View>
                     <View style={styles.difficultyContainer}>
-                    <Text style={styles.sectionTitle}>Difficulty</Text>
+                    <Text style={styles.sectionTitle}>AI Difficulty</Text>
                         <ScrollView horizontal>
                         {[
                             { label: 'Easy', color: '#22c55e' },
