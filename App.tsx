@@ -27,7 +27,7 @@ export default function App() {
     const [score, setScore] = useState(0);
     const [finalScore, setFinalScore] = useState(0);
     const [selectedSong, setSelectedSong] = useState('');
-    const [difficulty, setDifficulty] = useState('Easy');
+    const [difficulty, setDifficulty] = useState('Medium');
     const [youtubeUrl, setYoutubeUrl] = useState('');
     const [embedUrl, setEmbedUrl] = useState('');
     const [lyrics, setLyrics] = useState([]);
@@ -653,7 +653,7 @@ export default function App() {
                 <View style={styles.rightPanel}>
                     <View style={styles.difficultyContainer}>
                         <Text style={styles.sectionTitle}>Playlists</Text>
-                        <ScrollView>
+                        <ScrollView style={{ height: 400}}>
                             {allPlaylistNames.map(name => (
                                 <Pressable
                                     key={name}
@@ -694,10 +694,48 @@ export default function App() {
                         </ScrollView>
                     </View>
                     <View style={styles.difficultyContainer}>
-                        <Text style={styles.sectionTitle}>Difficulty</Text>
-                        <Text style={[styles.difficultyOption, { color: '#22c55e' }]} onPress={() => switchDifficulty('Easy')}>Easy</Text>
-                        <Text style={[styles.difficultyOption, { color: '#f97316' }]} onPress={() => switchDifficulty('Medium')}>Medium</Text>
-                        <Text style={[styles.difficultyOption, { color: '#dc2626' }]} onPress={() => switchDifficulty('Hard')}>Hard</Text>
+                    <Text style={styles.sectionTitle}>Difficulty</Text>
+                        <ScrollView horizontal>
+                        {[
+                            { label: 'Easy', color: '#22c55e' },
+                            { label: 'Medium', color: '#f97316' },
+                            { label: 'Hard', color: '#dc2626' }
+                        ].map(({ label, color }) => (
+                            <Pressable
+                                key={label}
+                                style={({ pressed }) => [
+                                    styles.difficultyOption,
+                                    difficulty === label && { backgroundColor: color, borderColor: color }, // Selected state
+                                    pressed && { backgroundColor: '#e5e5e5' }, // Pressed state
+                                ]}
+                                onPress={() => {
+                                    setDifficulty(label);
+                                    switchDifficulty(label);
+                                    try{
+                                        fetch('http://localhost:8000/change_threshold', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({ level: label }),
+                                        });
+                                    }
+                                    catch (error) {
+                                        console.error('Error changing difficulty:', error);
+                                    }
+                                }}
+                            >
+                                <Text
+                                    style={[
+                                        styles.difficultyText,
+                                        difficulty== label ? { color: '#fff' } : { color },
+                                    ]}
+                                >
+                                    {label}
+                                </Text>
+                            </Pressable>
+                        ))}
+                    </ScrollView>
                     </View>
 
                     <Pressable
@@ -900,8 +938,21 @@ const styles = StyleSheet.create({
         color: '#444',
     },
     difficultyOption: {
-        fontSize: 14,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
         marginVertical: 4,
+        marginHorizontal: 4,
+        borderWidth: 1,
+        borderColor: '#000',
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    
+    difficultyText: {
+        fontSize: 14,
+        fontWeight: 'bold',
     },
     button: {
         backgroundColor: '#0078d4',
