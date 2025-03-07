@@ -94,6 +94,9 @@ class Phrase(BaseModel):
 class Lyric(BaseModel):
     lyric: list
 
+class ThresholdLevel(BaseModel):
+    level: str
+
 app = FastAPI()
 
 global similarity
@@ -276,6 +279,25 @@ def full_lyric(request: Lyric):
     print(f"Received full lyric: {full_lyric}")
     return JSONResponse(content={"message": "Received full lyric."}, status_code=200)
 
+global threshold
+threshold = 0.3
+@app.post("/change_threshold")
+def change_threshold(request: ThresholdLevel):
+    """
+    Change the global threshold for the similarity check.
+    """
+    level = request.level
+    global threshold
+    if level == "Easy":
+        threshold = 0.15
+    elif level == "Medium":
+        threshold = 0.3
+    elif level == "Hard":
+        threshold = 0.45
+    print(f"Threshold changed to {threshold}")
+    return JSONResponse(content={"message": f"Threshold changed to {threshold}"}, status_code=200)
+
+
 # FastAPI endpoint to get the current match result
 @app.get("/match")
 def get_match():
@@ -284,6 +306,7 @@ def get_match():
     """
     global current_verse, prev_verse, prev_prev_verse
     global recognized_text
+    global threshold
     similarity_prev_prev = SequenceMatcher(None, recognized_text, prev_prev_verse).ratio()
     similarty_prev = SequenceMatcher(None, recognized_text, prev_verse).ratio()
     similarity_curr = SequenceMatcher(None, recognized_text, current_verse).ratio()
@@ -292,9 +315,8 @@ def get_match():
         (similarty_prev, prev_verse),
         (similarity_curr, current_verse)
     ]
-
     similarity, similarity_verse = max(similarities, key=lambda x: x[0])
-    if (similarity > 0.4) and recognized_text != "":
+    if (similarity > threshold) and recognized_text != "":
         print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
         return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})
     return JSONResponse(content={"match": "no", "similarity": current_match["similarity"]})
