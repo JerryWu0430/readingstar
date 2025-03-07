@@ -414,13 +414,8 @@ export default function App() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.titleBar}>
-                <SvgXml xml={menuSvg} width={24} height={24} />
-                <Text style={styles.titleText}>Reading Star</Text>
+                <Text style={styles.titleText}>Readingstar</Text>
                 <SvgXml xml={starSvg} width={20} height={20} />
-                <View style={styles.titleBarRight}>
-                    <Text style={styles.emailText}> jerry.wu.23@ucl.ac.uk</Text>
-                    <SvgXml xml={accountSvg} width={24} height={24} />
-                </View>
             </View>
 
             
@@ -738,30 +733,6 @@ export default function App() {
                     </ScrollView>
                     </View>
 
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.button,
-                            pressed && { backgroundColor: '#005bb5' },
-                        ]}
-                        onPress={() => {
-                            //test audio button logic
-                        }}
-                    >
-                        <Text style={styles.buttonText}>Test Audio</Text>
-                    </Pressable>
-
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.button,
-                            styles.submitButton,
-                            pressed && { backgroundColor: '#005bb5' },
-                        ]}
-                        onPress={() => {
-                            // submit button logic
-                        }}
-                    >
-                        <Text style={styles.submitButtonText}>Submit</Text>
-                    </Pressable>
                 </View>
             </View>
         </SafeAreaView>
@@ -939,7 +910,7 @@ const styles = StyleSheet.create({
     },
     difficultyOption: {
         paddingVertical: 8,
-        paddingHorizontal: 16,
+        paddingHorizontal: 6,
         marginVertical: 4,
         marginHorizontal: 4,
         borderWidth: 1,
