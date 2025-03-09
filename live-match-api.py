@@ -67,9 +67,26 @@ source = sr.Microphone(sample_rate=16000)
 
 # model for embedding similarity
 # Load model & tokenizer
-model_id = "sentence-transformers/all-MiniLM-L6-v2"
-ov_model = OVModelForFeatureExtraction.from_pretrained(model_id, export=True)
-tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# Adjust the model path to be relative to the executable location
+model_lm_dir =os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), "all-MiniLM-L6-v2-openvino")
+
+# Check if the model directory exists
+if not os.path.exists(model_lm_dir):
+    raise FileNotFoundError(f"Model directory not found at {model_lm_dir}")
+
+# Check if the necessary model files exist
+model_lm_files = ["openvino_model.xml", "openvino_model.bin"]
+for file in model_lm_files:
+    if not os.path.exists(os.path.join(model_lm_dir, file)):
+        raise FileNotFoundError(f"Model file {file} not found in directory {model_lm_dir}")
+
+try:
+    ov_model = OVModelForFeatureExtraction.from_pretrained(model_lm_dir, export=False)
+    tokenizer = AutoTokenizer.from_pretrained(model_lm_dir)
+except Exception as e:
+    sys.exit(1)
+
 
 def embedding_similarity_ov(text1, text2):
     inputs = tokenizer([text1, text2], padding=True, truncation=True, return_tensors="pt")
