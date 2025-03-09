@@ -34,6 +34,21 @@ datas += collect_data_files('_internal')
 # Ensure PyTorch is included
 hiddenimports += collect_submodules('torch')
 
+# Ensure SciPy is included
+hiddenimports += collect_submodules('scipy')
+hiddenimports += ['scipy.sparse.linalg.dsolve.linsolve']
+hiddenimports += ['scipy.sparse.csgraph._validation']
+
+# Collect dynamic libraries for SciPy
+binaries += collect_dynamic_libs('scipy')
+
+dll_path = r'C:\Windows\System32'
+binaries += [
+    (os.path.join(dll_path, 'vcruntime140.dll'), '.'),
+    (os.path.join(dll_path, 'msvcp140.dll'), '.'),
+    (os.path.join(dll_path, 'vcruntime140_1.dll'), '.'),
+]
+
 a = Analysis(
     ['live-match-api.py'],
     pathex=['.'],
