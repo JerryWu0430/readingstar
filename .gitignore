@@ -29,6 +29,11 @@ DerivedData
 *.ipa
 *.xcuserstate
 **/.xcode.env.local
+# Ignore msbuild bin log
+*.binlog
+
+# Ignore recorded audio wav files
+*.wav
 
 # Android/
 build/
