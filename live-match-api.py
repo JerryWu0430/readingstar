@@ -67,9 +67,26 @@ source = sr.Microphone(sample_rate=16000)
 
 # model for embedding similarity
 # Load model & tokenizer
-model_id = "sentence-transformers/all-MiniLM-L6-v2"
-ov_model = OVModelForFeatureExtraction.from_pretrained(model_id, export=True)
-tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# Adjust the model path to be relative to the executable location
+model_lm_dir =os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), "all-MiniLM-L6-v2-openvino")
+
+# Check if the model directory exists
+if not os.path.exists(model_lm_dir):
+    raise FileNotFoundError(f"Model directory not found at {model_lm_dir}")
+
+# Check if the necessary model files exist
+model_lm_files = ["openvino_model.xml", "openvino_model.bin"]
+for file in model_lm_files:
+    if not os.path.exists(os.path.join(model_lm_dir, file)):
+        raise FileNotFoundError(f"Model file {file} not found in directory {model_lm_dir}")
+
+try:
+    ov_model = OVModelForFeatureExtraction.from_pretrained(model_lm_dir, export=False)
+    tokenizer = AutoTokenizer.from_pretrained(model_lm_dir)
+except Exception as e:
+    sys.exit(1)
+
 
 def embedding_similarity_ov(text1, text2):
     inputs = tokenizer([text1, text2], padding=True, truncation=True, return_tensors="pt")
@@ -93,6 +110,9 @@ class Phrase(BaseModel):
 
 class Lyric(BaseModel):
     lyric: list
+
+class ThresholdLevel(BaseModel):
+    level: str
 
 app = FastAPI()
 
@@ -276,6 +296,25 @@ def full_lyric(request: Lyric):
     print(f"Received full lyric: {full_lyric}")
     return JSONResponse(content={"message": "Received full lyric."}, status_code=200)
 
+global threshold
+threshold = 0.3
+@app.post("/change_threshold")
+def change_threshold(request: ThresholdLevel):
+    """
+    Change the global threshold for the similarity check.
+    """
+    level = request.level
+    global threshold
+    if level == "Easy":
+        threshold = 0.15
+    elif level == "Medium":
+        threshold = 0.3
+    elif level == "Hard":
+        threshold = 0.45
+    print(f"Threshold changed to {threshold}")
+    return JSONResponse(content={"message": f"Threshold changed to {threshold}"}, status_code=200)
+
+
 # FastAPI endpoint to get the current match result
 @app.get("/match")
 def get_match():
@@ -284,6 +323,7 @@ def get_match():
     """
     global current_verse, prev_verse, prev_prev_verse
     global recognized_text
+    global threshold
     similarity_prev_prev = SequenceMatcher(None, recognized_text, prev_prev_verse).ratio()
     similarty_prev = SequenceMatcher(None, recognized_text, prev_verse).ratio()
     similarity_curr = SequenceMatcher(None, recognized_text, current_verse).ratio()
@@ -292,10 +332,8 @@ def get_match():
         (similarty_prev, prev_verse),
         (similarity_curr, current_verse)
     ]
-
     similarity, similarity_verse = max(similarities, key=lambda x: x[0])
-    print(f"Similarity: {similarity}, \nSimilarity verse: {similarity_verse}, \nRecognized text: {recognized_text}\n")
-    if (similarity > 0.2) and recognized_text != "":
+    if (similarity > threshold) and recognized_text != "":
         print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
         return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})
     return JSONResponse(content={"match": "no", "similarity": current_match["similarity"]})
