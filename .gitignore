@@ -6,6 +6,10 @@ whisper-tiny-en-openvino/*
 whisper-tiny-en-openvino/
 whisper-tiny-en-openvino
 /whisper-tiny-en-openvino
+all-miniLM-L6-v2-openvino/*
+all-miniLM-L6-v2-openvino/
+all-miniLM-L6-v2-openvino
+/all-miniLM-L6-v2-openvino
 # Xcode
 #
 build/
