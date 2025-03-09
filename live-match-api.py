@@ -333,6 +333,7 @@ def get_match():
         (similarity_curr, current_verse)
     ]
     similarity, similarity_verse = max(similarities, key=lambda x: x[0])
+    print(f"\nSimilarity: {similarity}, \nSimilarity verse: {similarity_verse}, \nRecognized text: {recognized_text}")
     if (similarity > threshold) and recognized_text != "":
         print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
         return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})
