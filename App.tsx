@@ -414,7 +414,7 @@ export default function App() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.titleBar}>
-                <Text style={styles.titleText}>Readingstar</Text>
+                <Text style={styles.titleText}>ReadingStar</Text>
                 <SvgXml xml={starSvg} width={20} height={20} />
             </View>
 
