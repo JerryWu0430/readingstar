@@ -684,7 +684,7 @@ export default function App() {
                                 setNewPlaylistName('');
                             }}
                         >
-                            <Text style={styles.goButtonText}>Go</Text>
+                            <Text style={styles.goButtonText}>Ok</Text>
                         </Pressable>
 
                     </View>
