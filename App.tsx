@@ -41,6 +41,8 @@ export default function App() {
     const [videoPlaying, setVideoPlaying] = useState(false);
     const [playlist, setPlaylist] = useState<{id: number, name: string, url: string}[]>([]); // Initial playlist [name, url]
     const [playlistName, setPlaylistName] = useState('Classic Nursery Rhymes');
+    const [newPlaylistName, setNewPlaylistName] = useState('');
+    const [createdPlaylist, setCreatedPlaylist] = useState('');
     const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
     const [allPlaylistsGetter, setAllPlaylistsGetter] = useState<{ [key: string]: {id: number, name: string, url: string}[] }>({});
     const [playlistLoaded, setPlaylistLoaded] = useState(false);
@@ -201,6 +203,9 @@ export default function App() {
                 },
                 body: JSON.stringify({"id": allPlaylistsGetter.length, "name": playlistName, "songs": [], "action": "create"}),
             });
+            fetchPlaylists();
+            setPlaylistName(playlistName);
+            setPlaylist([]);
         } catch (error) {
             console.error('Error creating playlist:', error);
         }
@@ -648,6 +653,35 @@ export default function App() {
                 <View style={styles.rightPanel}>
                     <View style={styles.difficultyContainer}>
                         <Text style={styles.sectionTitle}>Playlists</Text>
+                        <View style={styles.inputContainer}>
+                        <TextInput
+                            style={[
+                                styles.textInput,
+                                colorScheme === 'dark' && styles.textInputDark,
+                            ]}
+                            value={newPlaylistName}
+                            onChangeText={setNewPlaylistName}
+                            placeholder="Create playlist:"
+                            placeholderTextColor={colorScheme === 'dark' ? '#ccc' : '#999'}
+                        />
+
+                        <Pressable
+                            style={({ pressed }) => [
+                                {
+                                    backgroundColor: pressed ? '#005bb5' : '#0078d4',
+                                },
+                                styles.goButton,
+                                pressed && { backgroundColor: '#005bb5' },
+                            ]}
+                            onPress={() => {
+                                createPlaylistJson(newPlaylistName);
+                                setNewPlaylistName('');
+                            }}
+                        >
+                            <Text style={styles.goButtonText}>Go</Text>
+                        </Pressable>
+
+                    </View>
                         <ScrollView style={{ height: 400}}>
                             {allPlaylistNames.map(name => (
                                 <Pressable
@@ -657,31 +691,8 @@ export default function App() {
                                         styles.submitButton,
                                         (pressed || name == playlistName) && { backgroundColor: '#00b533' },
                                     ]}
-                                    onPress={() => switchPlaylist(name)}
-                                    /*
-                                        onLongPress={() => {
-                                            // rename playlist logic
-                                            // seems like we will have text input that
-                                            // is normally readonly, but editable when long pressed
-                                            const newName = prompt('Enter new playlist name:', name);
-                                            if (newName) {
-                                                const updatedPlaylists = { ...allPlaylistsGetter };
-                                                updatedPlaylists[newName] = updatedPlaylists[name];
-                                                delete updatedPlaylists[name];
-                                                setAllPlaylistsGetter(updatedPlaylists);
-                                                setAllPlaylistNames(Object.keys(updatedPlaylists));
-                                                if (playlistName === name) {
-                                                    setPlaylistName(newName);
-                                                    setPlaylist(updatedPlaylists[newName]);
-                                                }
-                                                updatePlaylistJson(updatedPlaylists[newName]);
-                                                removePlaylistJson(name);
-                                            }
-                                        }}
-                                    */>
-                                    <Text
-                                        style={[styles.buttonText]}
-                                    >
+                                    onPress={() => switchPlaylist(name)}>
+                                    <Text style={[styles.buttonText]}>
                                         {name}
                                     </Text>
                                 </Pressable>
