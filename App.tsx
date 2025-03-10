@@ -181,25 +181,23 @@ export default function App() {
         }
     };
 
-    const removePlaylistJson = async (playlistName: string, song: string) => {
+    const removePlaylistJson = async (name: string, song: string) => {
         try {
-            console.log('Removing playlist:', playlistName);
+            console.log('Removing playlist:', name);
             await fetch('http://localhost:8000/update_playlist', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({"name": playlistName, "song": song, "action": "remove"}),
+                body: JSON.stringify({"name": name, "song": song, "action": "remove"}),
             });
+            await fetchPlaylists();
         } catch (error) {
             console.error('Error removing playlist:', error);
         }
-        // if playlist is currently selected, choose another playlist
-        if (playlistName === playlistName) {
-            setPlaylist(allPlaylistsGetter[Object.keys(allPlaylistsGetter)[0]]);
-            setPlaylistName(Object.keys(allPlaylistsGetter)[0]);
+        if (playlistName === name) {
+            switchPlaylist(Object.keys(allPlaylistsGetter)[0]);
         }
-        fetchPlaylists();
     };
 
     const createPlaylistJson = async (playlistName: string) => {
@@ -270,8 +268,8 @@ export default function App() {
         if (allPlaylistsGetter[playlistName]) {
             setPlaylistLoaded(false);
             setPlaylistName(playlistName);
-            setPlaylist(allPlaylistsGetter[playlistName]);
             console.log('Switching playlist:', playlistName);
+            setPlaylist(allPlaylistsGetter[playlistName]);
             setPlaylistLoaded(true);
         } else {
             console.log('Playlist not found:', playlistName);
@@ -707,7 +705,7 @@ export default function App() {
                                             {name}
                                         </Text>
                                     </Pressable>
-                                    <SvgXml xml={closeSvg} width={20} height={20} style={styles.iconTag} onPress={() => removePlaylistJson(name, '')}/>
+                                    <SvgXml xml={closeSvg} width={20} height={20} style={styles.iconTag} onPress={() => {removePlaylistJson(name, '')}}/>
                                 </View>
                             ))}
                         </ScrollView>
