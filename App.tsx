@@ -656,8 +656,7 @@ export default function App() {
                         </View>
                     </View>
                 </View>
-
-                <View style={styles.rightPanel}>
+                <ScrollView style={styles.rightPanel}>
                     <View style={styles.difficultyContainer}>
                         <Text style={styles.sectionTitle}>Playlists</Text>
                         <View style={styles.inputContainer}>
@@ -755,7 +754,7 @@ export default function App() {
                     </ScrollView>
                     </View>
 
-                </View>
+                </ScrollView>
             </View>
         </SafeAreaView>
     );
@@ -902,7 +901,7 @@ const styles = StyleSheet.create({
         color: '#005bb5',
     },
     rightPanel: {
-        width: 250,
+        maxWidth: 250,
         padding: 16,
         backgroundColor: '#ffffff',
         borderLeftWidth: 1,
