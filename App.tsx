@@ -4,6 +4,7 @@ import {
     Text,
     ScrollView,
     Pressable,
+    Button,
     StyleSheet,
     SafeAreaView,
     TextInput,
@@ -14,7 +15,7 @@ import WebView from 'react-native-webview';
 import { SvgXml } from 'react-native-svg';
 import { parseString } from 'react-native-xml2js';
 import he from 'he';
-import { AppState, AppStateStatus } from "react-native";
+import { AppState, AppStateStatus } from 'react-native';
 
 const menuSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg>`;
 const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -22,6 +23,7 @@ const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 </svg>`;
 const accountSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6,17C6,15 10,13.9 12,13.9C14,13.9 18,15 18,17V18H6M15,9A3,3 0 0,1 12,12A3,3 0 0,1 9,9A3,3 0 0,1 12,6A3,3 0 0,1 15,9M3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3H5C3.89,3 3,3.9 3,5Z" /></svg>`;
 const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" /></svg>`;
+const closeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0021b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
 
 export default function App() {
     const [score, setScore] = useState(0);
@@ -46,6 +48,7 @@ export default function App() {
     const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
     const [allPlaylistsGetter, setAllPlaylistsGetter] = useState<{ [key: string]: {id: number, name: string, url: string}[] }>({});
     const [playlistLoaded, setPlaylistLoaded] = useState(false);
+    const [display, setDisplay] = useState("notdisplayed");
     
     const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
 
@@ -191,6 +194,12 @@ export default function App() {
         } catch (error) {
             console.error('Error removing playlist:', error);
         }
+        // if playlist is currently selected, choose another playlist
+        if (playlistName === playlistName) {
+            setPlaylist(allPlaylistsGetter[Object.keys(allPlaylistsGetter)[0]]);
+            setPlaylistName(Object.keys(allPlaylistsGetter)[0]);
+        }
+        fetchPlaylists();
     };
 
     const createPlaylistJson = async (playlistName: string) => {
@@ -684,7 +693,8 @@ export default function App() {
                     </View>
                         <ScrollView style={{ height: 400}}>
                             {allPlaylistNames.map(name => (
-                                <Pressable
+                                <View style={styles.blockIcon}>
+                                    <Pressable
                                     key={name}
                                     style={({ pressed }) => [
                                         styles.button,
@@ -692,10 +702,13 @@ export default function App() {
                                         (pressed || name == playlistName) && { backgroundColor: '#00b533' },
                                     ]}
                                     onPress={() => switchPlaylist(name)}>
-                                    <Text style={[styles.buttonText]}>
-                                        {name}
-                                    </Text>
-                                </Pressable>
+                                    
+                                        <Text style={[styles.buttonText]}>
+                                            {name}
+                                        </Text>
+                                    </Pressable>
+                                    <SvgXml xml={closeSvg} width={20} height={20} style={styles.iconTag} onPress={() => removePlaylistJson(name, '')}/>
+                                </View>
                             ))}
                         </ScrollView>
                     </View>
@@ -1018,6 +1031,18 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFD700',
         alignSelf: 'flex-start',
     },
+    blockIcon: {
+        position: 'relative',
+        display: 'flex',
+    },
+    iconTag: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        zIndex: 1,
+        width: 12,
+        height: 12,
+    }
 });
 
 
