@@ -33,11 +33,6 @@
                     "id": 5,
                     "name": "Hush Little Baby",
                     "url": "https://www.youtube.com/watch?v=f_raDpgx_3M"
-                },
-                {
-                    "id": 6,
-                    "name": "Bruno Mars - Grenade (Audio)",
-                    "url": "https://www.youtube.com/watch?v=LAW5JibpkTY"
                 }
             ]
         },
@@ -145,21 +140,6 @@
                     "url": "https://www.youtube.com/watch?v=EHaoEKcuX0g"
                 }
             ]
-        },
-        {
-            "id": 6,
-            "name": "Playlist 1",
-            "songs": []
-        },
-        {
-            "id": 7,
-            "name": "Playlist 2",
-            "songs": []
-        },
-        {
-            "id": 8,
-            "name": "Playlist 3",
-            "songs": []
         }
     ]
 }
