@@ -279,9 +279,14 @@ def update_lyric(phrase: Phrase):
     prev_verse = current_verse
     current_verse = phrase.lyric
     print(f"Updated current lyric to: '{current_verse}'")
+    c_message = {"message": f"Updated current lyric to: '{current_verse}' and processed audio."}
+    
+    verse_check = current_verse.strip()
+    if verse_check.startswith("[") or verse_check.startswith("("):
+        current_verse = ""
 
     return JSONResponse(
-        content={"message": f"Updated current lyric to: '{current_verse}' and processed audio."}, 
+        content=c_message, 
         status_code=200
     )
 
@@ -334,10 +339,9 @@ def get_match():
     ]
     similarity, similarity_verse = max(similarities, key=lambda x: x[0])
     print(f"\nSimilarity: {similarity}, \nSimilarity verse: {similarity_verse}, \nRecognized text: {recognized_text}")
-    verse_check = similarity_verse.strip()
-    if verse_check.startswith("[") or verse_check.startswith("("):
-        similarity_verse = ""
+    if similarity_verse == "":
         similarity = 0.0
+    
     if (similarity > threshold) and recognized_text != "":
         print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
         return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})

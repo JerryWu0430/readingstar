@@ -44,7 +44,6 @@ export default function App() {
     const [playlist, setPlaylist] = useState<{id: number, name: string, url: string}[]>([]); // Initial playlist [name, url]
     const [playlistName, setPlaylistName] = useState('Classic Nursery Rhymes');
     const [newPlaylistName, setNewPlaylistName] = useState('');
-    const [createdPlaylist, setCreatedPlaylist] = useState('');
     const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
     const [allPlaylistsGetter, setAllPlaylistsGetter] = useState<{ [key: string]: {id: number, name: string, url: string}[] }>({});
     const [playlistLoaded, setPlaylistLoaded] = useState(false);
@@ -97,7 +96,8 @@ export default function App() {
     const useMountEffect = (f: () => void) => useEffect(() => { f(); }, []);
 
 
-    const getYoutubeEmbedUrl = async (url: string): Promise<void> => {
+    const 
+    getYoutubeEmbedUrl = async (url: string): Promise<void> => {
         const videoId: string | undefined = url.split('v=')[1];
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
@@ -256,7 +256,6 @@ export default function App() {
         setSelectedSong(song);
         const songUrl = playlist.find((item) => item.name === song)?.url;
         if (songUrl) {
-            setFinalScore(-1);
             setYoutubeUrl(songUrl);
             getYoutubeEmbedUrl(songUrl);
         }
