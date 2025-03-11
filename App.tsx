@@ -48,7 +48,6 @@ export default function App() {
     const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
     const [allPlaylistsGetter, setAllPlaylistsGetter] = useState<{ [key: string]: {id: number, name: string, url: string}[] }>({});
     const [playlistLoaded, setPlaylistLoaded] = useState(false);
-    const [display, setDisplay] = useState("notdisplayed");
     
     const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
 
