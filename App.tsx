@@ -27,7 +27,7 @@ const closeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
 
 export default function App() {
     const [score, setScore] = useState(0);
-    const [finalScore, setFinalScore] = useState(0);
+    const [finalScore, setFinalScore] = useState(-1);
     const [selectedSong, setSelectedSong] = useState('');
     const [difficulty, setDifficulty] = useState('Medium');
     const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -257,6 +257,7 @@ export default function App() {
         setSelectedSong(song);
         const songUrl = playlist.find((item) => item.name === song)?.url;
         if (songUrl) {
+            setFinalScore(-1);
             setYoutubeUrl(songUrl);
             getYoutubeEmbedUrl(songUrl);
         }
@@ -623,6 +624,10 @@ export default function App() {
                                 {score > 0 ? (
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                         You won {score} points!
+                                    </Text>
+                                ) : null}
+                                {finalScore > 0 ? (
+                                    <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                         You were {Math.round(finalScore * 100)}% accurate!
                                     </Text>
                                 ) : null}
