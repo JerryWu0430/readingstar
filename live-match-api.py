@@ -279,14 +279,9 @@ def update_lyric(phrase: Phrase):
     prev_verse = current_verse
     current_verse = phrase.lyric
     print(f"Updated current lyric to: '{current_verse}'")
-    c_message = {"message": f"Updated current lyric to: '{current_verse}' and processed audio."}
-    
-    verse_check = current_verse.strip()
-    if verse_check.startswith("[") or verse_check.startswith("("):
-        current_verse = ""
 
     return JSONResponse(
-        content=c_message, 
+        content={"message": f"Updated current lyric to: '{current_verse}' and processed audio."}, 
         status_code=200
     )
 
@@ -329,6 +324,23 @@ def get_match():
     global current_verse, prev_verse, prev_prev_verse
     global recognized_text
     global threshold
+
+    # remove brackets from the current verse
+    current_verse = current_verse.strip()
+    try:
+        if '[' in current_verse:
+            # remove the text between brackets
+            current_verse = current_verse[:current_verse.find("[")] + current_verse[current_verse.find("]")+1:]
+        if '(' in current_verse:
+            # get the text between brackets
+            current_verse = current_verse[:current_verse.find("(")] + current_verse[current_verse.find(")")+1:]
+    except:
+        pass
+
+    if current_verse == "":
+        similarity = 0.0
+        return JSONResponse(content={"match": "no", "similarity": 0.0})
+    
     similarity_prev_prev = SequenceMatcher(None, recognized_text, prev_prev_verse).ratio()
     similarty_prev = SequenceMatcher(None, recognized_text, prev_verse).ratio()
     similarity_curr = SequenceMatcher(None, recognized_text, current_verse).ratio()
@@ -339,7 +351,8 @@ def get_match():
     ]
     similarity, similarity_verse = max(similarities, key=lambda x: x[0])
     print(f"\nSimilarity: {similarity}, \nSimilarity verse: {similarity_verse}, \nRecognized text: {recognized_text}")
-    if similarity_verse == "":
+    
+    if current_verse == "":
         similarity = 0.0
     
     if (similarity > threshold) and recognized_text != "":

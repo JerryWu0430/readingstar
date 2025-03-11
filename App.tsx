@@ -352,7 +352,7 @@ export default function App() {
             const elapsedTime = currentTime;
 
             // Find the current lyric based on elapsed time
-            const currentLyric = lyrics.reduce(
+            var currentLyric = lyrics.reduce(
                 (prev, curr) => (curr.time <= elapsedTime ? curr : prev),
                 { lyric: '' }
             ).lyric;
@@ -403,6 +403,16 @@ export default function App() {
           subscription.remove();
         };
     }, []);
+
+    const removeBracketedText = (lyric: string) => {
+        if (lyric.includes('[') && lyric.includes(']')) {
+            return lyric.replace(/\[.*?\]/g, '');
+        }
+        if (lyric.includes('(') && lyric.includes(')')) {
+            return lyric.replace(/\(.*?\)/g, '');
+        }
+        return lyric;
+    }
 
     const animatedValue = useRef(new Animated.Value(0)).current;
 
@@ -643,7 +653,7 @@ export default function App() {
                     </View>
 
                     <View style={styles.lyricsContainer}>
-                        <Text style={styles.lyricsText}>{currentLyric}</Text>
+                        <Text style={styles.lyricsText}>{removeBracketedText(currentLyric)}</Text>
                         <View style={styles.slidingBarContainer}>
                             <Animated.View
                                 style={[
