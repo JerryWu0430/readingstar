@@ -97,7 +97,7 @@ def embedding_similarity_ov(text1, text2):
     embeddings = outputs.last_hidden_state.mean(dim=1).detach().numpy()
 
     embeddings = normalize(embeddings, axis=1)
-    return cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
+    return ((cosine_similarity([embeddings[0]], [embeddings[1]])[0][0])+1)/2
 
 
 def record_callback(_, audio: sr.AudioData) -> None:
@@ -324,6 +324,23 @@ def get_match():
     global current_verse, prev_verse, prev_prev_verse
     global recognized_text
     global threshold
+
+    # remove brackets from the current verse
+    current_verse = current_verse.strip()
+    try:
+        if '[' in current_verse:
+            # remove the text between brackets
+            current_verse = current_verse[:current_verse.find("[")] + current_verse[current_verse.find("]")+1:]
+        if '(' in current_verse:
+            # get the text between brackets
+            current_verse = current_verse[:current_verse.find("(")] + current_verse[current_verse.find(")")+1:]
+    except:
+        pass
+
+    if current_verse == "":
+        similarity = 0.0
+        return JSONResponse(content={"match": "no", "similarity": 0.0})
+    
     similarity_prev_prev = SequenceMatcher(None, recognized_text, prev_prev_verse).ratio()
     similarty_prev = SequenceMatcher(None, recognized_text, prev_verse).ratio()
     similarity_curr = SequenceMatcher(None, recognized_text, current_verse).ratio()
@@ -334,6 +351,10 @@ def get_match():
     ]
     similarity, similarity_verse = max(similarities, key=lambda x: x[0])
     print(f"\nSimilarity: {similarity}, \nSimilarity verse: {similarity_verse}, \nRecognized text: {recognized_text}")
+    
+    if current_verse == "":
+        similarity = 0.0
+    
     if (similarity > threshold) and recognized_text != "":
         print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
         return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})

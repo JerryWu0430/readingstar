@@ -27,7 +27,7 @@ const closeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
 
 export default function App() {
     const [score, setScore] = useState(0);
-    const [finalScore, setFinalScore] = useState(0);
+    const [finalScore, setFinalScore] = useState(-1);
     const [selectedSong, setSelectedSong] = useState('');
     const [difficulty, setDifficulty] = useState('Medium');
     const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -44,11 +44,9 @@ export default function App() {
     const [playlist, setPlaylist] = useState<{id: number, name: string, url: string}[]>([]); // Initial playlist [name, url]
     const [playlistName, setPlaylistName] = useState('Classic Nursery Rhymes');
     const [newPlaylistName, setNewPlaylistName] = useState('');
-    const [createdPlaylist, setCreatedPlaylist] = useState('');
     const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
     const [allPlaylistsGetter, setAllPlaylistsGetter] = useState<{ [key: string]: {id: number, name: string, url: string}[] }>({});
     const [playlistLoaded, setPlaylistLoaded] = useState(false);
-    const [display, setDisplay] = useState("notdisplayed");
     
     const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
 
@@ -98,7 +96,8 @@ export default function App() {
     const useMountEffect = (f: () => void) => useEffect(() => { f(); }, []);
 
 
-    const getYoutubeEmbedUrl = async (url: string): Promise<void> => {
+    const 
+    getYoutubeEmbedUrl = async (url: string): Promise<void> => {
         const videoId: string | undefined = url.split('v=')[1];
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
@@ -353,7 +352,7 @@ export default function App() {
             const elapsedTime = currentTime;
 
             // Find the current lyric based on elapsed time
-            const currentLyric = lyrics.reduce(
+            var currentLyric = lyrics.reduce(
                 (prev, curr) => (curr.time <= elapsedTime ? curr : prev),
                 { lyric: '' }
             ).lyric;
@@ -404,6 +403,16 @@ export default function App() {
           subscription.remove();
         };
     }, []);
+
+    const removeBracketedText = (lyric: string) => {
+        if (lyric.includes('[') && lyric.includes(']')) {
+            return lyric.replace(/\[.*?\]/g, '');
+        }
+        if (lyric.includes('(') && lyric.includes(')')) {
+            return lyric.replace(/\(.*?\)/g, '');
+        }
+        return lyric;
+    }
 
     const animatedValue = useRef(new Animated.Value(0)).current;
 
@@ -623,6 +632,10 @@ export default function App() {
                                 {score > 0 ? (
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                         You won {score} points!
+                                    </Text>
+                                ) : null}
+                                {finalScore > 0 ? (
+                                    <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                         You were {Math.round(finalScore * 100)}% accurate!
                                     </Text>
                                 ) : null}
@@ -640,7 +653,7 @@ export default function App() {
                     </View>
 
                     <View style={styles.lyricsContainer}>
-                        <Text style={styles.lyricsText}>{currentLyric}</Text>
+                        <Text style={styles.lyricsText}>{removeBracketedText(currentLyric)}</Text>
                         <View style={styles.slidingBarContainer}>
                             <Animated.View
                                 style={[
