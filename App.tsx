@@ -158,8 +158,10 @@ export default function App() {
 
             if (result.match === "yes") {
                 setShowStar(true);
+                setScore(prevScore => prevScore + Math.round(result.similarity * 100));
                 setTimeout(() => setShowStar(false), 3000);
             }
+            
         } catch (error) {
             console.error("Error checking the match:", error);
         }
@@ -370,12 +372,6 @@ export default function App() {
         }
     }, [currentTime, lyrics]);
 
-
-    useEffect(() => {
-        if (showStar) {
-            setScore(prevScore => prevScore + 100);
-        }
-    }, [showStar]);
 
     useEffect(() => {
         const handleAppStateChange = (nextAppState: AppStateStatus) => {
