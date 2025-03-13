@@ -12,7 +12,7 @@ hiddenimports = ['uvicorn.lifespan.off','uvicorn.lifespan.on','uvicorn.lifespan'
 'uvicorn.protocols.websockets','uvicorn.protocols.http','uvicorn.protocols',
 'uvicorn.loops.auto','uvicorn.loops.asyncio','uvicorn.loops.uvloop','uvicorn.loops',
 'uvicorn.logging',
-    'live-match-api',]
+    'live_match_api',]
 
 # Collect data files, dynamic libraries, and submodules for openvino_genai
 datas += collect_data_files('openvino_genai')
@@ -50,7 +50,7 @@ binaries += [
 ]
 
 a = Analysis(
-    ['live-match-api.py'],
+    ['live_match_api.py'],
     pathex=['.'],
     binaries=binaries,
     datas=datas,
@@ -69,7 +69,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='live-match-api',
+    name='live_match_api',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -87,5 +87,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='live-match-api',
+    name='live_match_api',
 )
