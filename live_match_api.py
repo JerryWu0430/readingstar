@@ -57,10 +57,8 @@ recorder.dynamic_energy_threshold = True
 # Shared variables
 global current_verse
 global prev_verse
-global prev_prev_verse
 prev_verse = ""  # The previous lyric phrase
 current_verse = ""  # The current lyric phrase
-prev_prev_verse = ""  # The lyric phrase before the previous one
 data_queue = Queue()
 current_match = {"text": None, "similarity": 0.0}
 source = sr.Microphone(sample_rate=16000)
@@ -274,8 +272,7 @@ def update_lyric(phrase: Phrase):
     """
     Update the current lyric phrase and run the transcription process.
     """
-    global current_verse, prev_verse, prev_prev_verse
-    prev_prev_verse = prev_verse
+    global current_verse, prev_verse
     prev_verse = current_verse
     current_verse = phrase.lyric
     print(f"Updated current lyric to: '{current_verse}'")
@@ -306,11 +303,11 @@ def change_threshold(request: ThresholdLevel):
     level = request.level
     global threshold
     if level == "Easy":
-        threshold = 0.15
+        threshold = 0.2
     elif level == "Medium":
-        threshold = 0.3
+        threshold = 0.35
     elif level == "Hard":
-        threshold = 0.45
+        threshold = 0.5
     print(f"Threshold changed to {threshold}")
     return JSONResponse(content={"message": f"Threshold changed to {threshold}"}, status_code=200)
 
@@ -321,7 +318,7 @@ def get_match():
     """
     Get the current transcription match.
     """
-    global current_verse, prev_verse, prev_prev_verse
+    global current_verse, prev_verse
     global recognized_text
     global threshold
 
@@ -341,11 +338,9 @@ def get_match():
         similarity = 0.0
         return JSONResponse(content={"match": "no", "similarity": 0.0})
     
-    similarity_prev_prev = SequenceMatcher(None, recognized_text, prev_prev_verse).ratio()
     similarty_prev = SequenceMatcher(None, recognized_text, prev_verse).ratio()
     similarity_curr = SequenceMatcher(None, recognized_text, current_verse).ratio()
     similarities = [
-        #(similarity_prev_prev, prev_prev_verse)
         (similarty_prev, prev_verse),
         (similarity_curr, current_verse)
     ]
@@ -355,8 +350,8 @@ def get_match():
     
     if (similarity > threshold) and recognized_text != "":
         print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
-        return JSONResponse(content={"match": "yes", "similarity": current_match["similarity"]})
-    return JSONResponse(content={"match": "no", "similarity": current_match["similarity"]})
+        return JSONResponse(content={"match": "yes", "similarity": similarity})
+    return JSONResponse(content={"match": "no", "similarity": similarity})
 
 # Run FastAPI
 if __name__ == "__main__":
