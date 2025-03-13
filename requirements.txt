@@ -11,3 +11,7 @@ pip install ipywidgets
 pip install sounddevice
 pip install sentence_transformers
 pip install scikit-learn
+pip install pytest
+pip install httpx
+
+
