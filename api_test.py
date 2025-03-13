@@ -183,7 +183,7 @@ class TestLiveMatchAPI(unittest.TestCase):
     def test_change_threshold(self):
         """Test the change_threshold endpoint"""
         # Test each difficulty level
-        for level, expected in [("Easy", 0.15), ("Medium", 0.3), ("Hard", 0.45)]:
+        for level, expected in [("Easy", 0.2), ("Medium", 0.35), ("Hard", 0.5)]:
             response = self.client.post("/change_threshold", json={"level": level})
             self.assertEqual(response.status_code, 200)
             self.assertIn(str(expected), response.json()["message"])
@@ -191,7 +191,6 @@ class TestLiveMatchAPI(unittest.TestCase):
     @patch("live_match_api.SequenceMatcher")
     @patch("live_match_api.current_verse", "Test current verse")  
     @patch("live_match_api.prev_verse", "Test previous verse")
-    @patch("live_match_api.prev_prev_verse", "Test prev prev verse")
     @patch("live_match_api.recognized_text", "Test current verse")
     @patch("live_match_api.threshold", 0.7)
     @patch("live_match_api.current_match", {"similarity": 0.8})
@@ -216,7 +215,6 @@ class TestLiveMatchAPI(unittest.TestCase):
     @patch("live_match_api.SequenceMatcher")
     @patch("live_match_api.current_verse", "Test current verse")  
     @patch("live_match_api.prev_verse", "Test previous verse")
-    @patch("live_match_api.prev_prev_verse", "Test prev prev verse")
     @patch("live_match_api.recognized_text", "Test current verse")
     @patch("live_match_api.threshold", 0.7)
     @patch("live_match_api.current_match", {"similarity": 0.6})
