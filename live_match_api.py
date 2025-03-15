@@ -55,8 +55,6 @@ recorder.dynamic_energy_threshold = True
 
 
 # Shared variables
-global current_verse
-global prev_verse
 prev_verse = ""  # The previous lyric phrase
 current_verse = ""  # The current lyric phrase
 data_queue = Queue()
@@ -87,6 +85,9 @@ except Exception as e:
 
 
 def embedding_similarity_ov(text1, text2):
+    '''
+    Calculate the embedding similarity between two texts using OpenVINO model
+    '''
     inputs = tokenizer([text1, text2], padding=True, truncation=True, return_tensors="pt")
 
     with torch.no_grad(): 
@@ -99,10 +100,15 @@ def embedding_similarity_ov(text1, text2):
 
 
 def record_callback(_, audio: sr.AudioData) -> None:
+   '''
+   Callback function for recording audio
+   '''
    data = audio.get_raw_data()
    data_queue.put(data)
 
-# Input model for POST request
+'''
+Input classes for FastAPI
+'''
 class Phrase(BaseModel):
     lyric: str
 
@@ -114,13 +120,9 @@ class ThresholdLevel(BaseModel):
 
 app = FastAPI()
 
-global similarity
 similarity = 0.0
-global recognized_text
 recognized_text = ""
-global stop_call
 stop_call = None
-global stop_flag
 stop_flag = True
 # Transcription process
 @app.post("/transcribe")
@@ -145,17 +147,17 @@ def process_audio():
         while not stop_flag:
             now = datetime.utcnow()
             if not data_queue.empty():
-                #getting the currently recognized text
-                if phrase_time and now - phrase_time > timedelta(seconds=phrase_timeout):
-                    phrase_complete = True
+                #Collect chunk of audio data and append to queue
                 phrase_time = now
                 audio_data = b''.join(data_queue.queue)
-                #For recording wav file
                 audio_chunk = data_queue.get()
+                # Write audio chunk to recorded audio file
                 recorded_audio.write(audio_chunk)
                 data_queue.queue.clear()
+                # Convert audio data to numpy array and run the openvino whisper pipeline
                 audio_np = np.frombuffer(audio_data, np.int16).astype(np.float32) / 32768.0
                 genai_result = ov_pipe.generate(audio_np)
+                # Generate recognized text transcription
                 recognized_text = str(genai_result).strip()
                 print(f"Recognized: {recognized_text}")
             else:
@@ -168,6 +170,9 @@ def process_audio():
 
 @app.get("/close_microphone")
 def close_microphone():
+    '''
+    Close the microphone
+    '''
     global stop_call, stop_flag
     if stop_call is None:
         return JSONResponse(content={"message": "Microphone already closed."}, status_code=200)
@@ -188,7 +193,9 @@ def save_audio_to_file(audio_bytes):
 
 @app.get("/final_score")
 def final_score():
-    #transcribe the recorded_audio.wav file
+    '''
+    Calculate the final score using the recorded wav and embedding similarity
+    '''
     recognized_wav = None
     global full_lyric
     try:
@@ -286,6 +293,9 @@ full_lyric = ""
 lyric_array = []
 @app.post("/full_lyric")
 def full_lyric(request: Lyric):
+    '''
+    Get the full lyric from the app
+    '''
     global full_lyric
     global lyric_array
     lyric_array = request.lyric
@@ -293,7 +303,6 @@ def full_lyric(request: Lyric):
     print(f"Received full lyric: {full_lyric}")
     return JSONResponse(content={"message": "Received full lyric."}, status_code=200)
 
-global threshold
 threshold = 0.3
 @app.post("/change_threshold")
 def change_threshold(request: ThresholdLevel):
