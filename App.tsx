@@ -498,7 +498,7 @@ export default function App() {
                 )}
 
                 <View style={[styles.mainContent, isFocusMode && styles.mainContentFocus]}>
-                    <View style={styles.scoreContainer}>
+                    <View style={[styles.scoreContainer, isFocusMode && styles.scoreContainerFocus]}>
                         <Text style={styles.scoreText}>Score: {score}</Text>
                     </View>
 
@@ -533,7 +533,7 @@ export default function App() {
                         </View>
                     )}
 
-                    <View style={styles.videoContainer}>
+                    <View style={[styles.videoContainer, isFocusMode && styles.videoContainerFocus]}>
                         {youtubeUrl ? (
                             videoPlaying ?
                             (<WebView
@@ -660,7 +660,7 @@ export default function App() {
                         <View style={styles.overlay} />
                     </View>
 
-                    <View style={styles.lyricsContainer}>
+                    <View style={[styles.lyricsContainer, isFocusMode && styles.lyricsContainerFocus]}>
                         <Text style={styles.lyricsText}>{removeBracketedText(currentLyric)}</Text>
                         <View style={styles.slidingBarContainer}>
                             <Animated.View
@@ -856,7 +856,10 @@ const styles = StyleSheet.create({
     mainContent: {
         flex: 1,
         padding: 16,
-        minWidth: 500, // Add fixed min width
+        minWidth: 500,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
     },
     scoreContainer: {
         backgroundColor: '#005bb5',
@@ -871,6 +874,14 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         elevation: 3,
     },
+    scoreContainerFocus: {
+        position: 'absolute',
+        top: 16,
+        right: 16,
+        zIndex: 10,
+        marginBottom: 0,
+        padding: 8,
+    },
     scoreText: {
         fontSize: 24,
         fontWeight: 'bold',
@@ -882,12 +893,19 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         overflow: 'hidden',
         position: 'relative',
-        minWidth: 300, // Add fixed min width
-        maxWidth: 800,  // Add fixed max width
-        maxHeight: 450, // Add fixed max height
-        width: '100%',  // Take available width up to max
+        width: '100%',
+        maxWidth: 800,
+        maxHeight: 450,
         alignSelf: 'center',
         flex: 0,
+        marginVertical: 8,
+    },
+    videoContainerFocus: {
+        maxWidth: 1400,
+        maxHeight: 600,
+        marginTop: 15,
+        marginBottom: 2,
+        borderRadius: 0,
     },
     webview: {
         flex: 1,
@@ -916,6 +934,12 @@ const styles = StyleSheet.create({
     lyricsContainer: {
         alignItems: 'center',
         gap: 16,
+        marginTop: 16,
+        paddingHorizontal: 16,
+    },
+    lyricsContainerFocus: {
+        marginTop: 16,
+        paddingHorizontal: 32,
     },
     lyricsText: {
         fontSize: 32,
@@ -1089,6 +1113,8 @@ const styles = StyleSheet.create({
     mainContentFocus: {
         marginLeft: 0,
         marginRight: 0,
+        padding: 0,
+        justifyContent: 'flex-start',
     },
 });
 
