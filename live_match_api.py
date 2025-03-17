@@ -132,9 +132,9 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S.%f'
 )
 
-def log_song(song_title: str, duration: float, average_similarity: float, final_score: float, time_taken: float):
+def log_song(duration: float, average_similarity: float, final_score: float, time_taken: float):
     """Logs a song entry with timestamp, title, duration, average similarity per lyric, final similarity score, and the time taken to generate the final score."""
-    log_entry = f"{song_title}, {duration}, {average_similarity}, {final_score}, {time_taken}"
+    log_entry = f"{duration}, {average_similarity}, {final_score}, {time_taken}"
     logging.info(log_entry)
 
 similarity = 0.0
@@ -221,10 +221,12 @@ def final_score():
     global similarity_over_song
 
     s = process_time()
+    duration = 0.0
     try:
         with wave.open("recorded_audio.wav", "rb") as wf:
             audio_data = wf.readframes(wf.getnframes())
             audio_np = np.frombuffer(audio_data, np.int16).astype(np.float32) / 32768.0
+            duration = wf.getnframes() / wf.getframerate()
             genai_result = ov_pipe.generate(audio_np)
             recognized_wav = str(genai_result).strip()
     except Exception as e:
@@ -235,7 +237,7 @@ def final_score():
     print(f"Final similarity: {similarity}")
     print("Recognized wav: ", recognized_wav)
     
-    log_song(song_title, duration, similarity_over_song.avg(), similarity, (t-s))
+    log_song(duration, similarity_over_song.avg(), similarity, (t-s))
     return JSONResponse(content={"final_score": similarity}, status_code=200)
 
 # FastAPI endpoint to post the playlist from playlists.json
