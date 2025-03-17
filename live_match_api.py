@@ -10,7 +10,7 @@ import numpy as np
 import openvino_genai as ov_genai
 import speech_recognition as sr
 import uvicorn
-from time import sleep
+from time import sleep, process_time
 import json
 import multiprocessing
 import wave
@@ -22,6 +22,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 import torch
+import logging
 
 # Set up OpenVINO and device
 device = "CPU"
@@ -120,10 +121,29 @@ class ThresholdLevel(BaseModel):
 
 app = FastAPI()
 
+import logging
+from datetime import datetime
+
+# Configure logging
+logging.basicConfig(
+    filename='song_log.log', 
+    level=logging.INFO, 
+    format='%(asctime)s | %(message)s', 
+    datefmt='%Y-%m-%d %H:%M:%S.%f'
+)
+
+def log_song(song_title: str, duration: float, average_similarity: float, final_score: float, time_taken: float):
+    """Logs a song entry with timestamp, title, duration, average similarity per lyric, final similarity score, and the time taken to generate the final score."""
+    log_entry = f"{song_title}, {duration}, {average_similarity}, {final_score}, {time_taken}"
+    logging.info(log_entry)
+
 similarity = 0.0
 recognized_text = ""
 stop_call = None
 stop_flag = True
+similarity_over_song = []
+final_similarity = 0.0
+
 # Transcription process
 @app.post("/transcribe")
 def process_audio():
@@ -198,6 +218,9 @@ def final_score():
     '''
     recognized_wav = None
     global full_lyric
+    global similarity_over_song
+
+    s = process_time()
     try:
         with wave.open("recorded_audio.wav", "rb") as wf:
             audio_data = wf.readframes(wf.getnframes())
@@ -207,8 +230,12 @@ def final_score():
     except Exception as e:
         print(f"Error during final transcription: {e}")
     similarity= float(embedding_similarity_ov(full_lyric, recognized_wav))
+    t = process_time()
+
     print(f"Final similarity: {similarity}")
-    print("Recognized wav: ", recognized_wav)   
+    print("Recognized wav: ", recognized_wav)
+    
+    log_song(song_title, duration, similarity_over_song.avg(), similarity, (t-s))
     return JSONResponse(content={"final_score": similarity}, status_code=200)
 
 # FastAPI endpoint to post the playlist from playlists.json
@@ -298,6 +325,8 @@ def full_lyric(request: Lyric):
     '''
     global full_lyric
     global lyric_array
+    global similarity_over_song
+    similarity_over_song = []
     lyric_array = request.lyric
     full_lyric = " ".join([entry["lyric"] for entry in lyric_array])
     print(f"Received full lyric: {full_lyric}")
@@ -330,6 +359,7 @@ def get_match():
     global current_verse, prev_verse
     global recognized_text
     global threshold
+    global similarity_over_song
 
     # remove brackets from the current verse
     current_verse = current_verse.strip()
@@ -356,6 +386,7 @@ def get_match():
     similarity, similarity_verse = max(similarities, key=lambda x: x[0])
     print(f"\nSimilarity: {similarity}, \nSimilarity verse: {similarity_verse}, \nRecognized text: {recognized_text}")
     
+    similarity_over_song.append(similarity)
     
     if (similarity > threshold) and recognized_text != "":
         print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
