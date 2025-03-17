@@ -23,6 +23,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 import torch
 import logging
+import platform
 
 # Set up OpenVINO and device
 device = "CPU"
@@ -133,8 +134,8 @@ logging.basicConfig(
 )
 
 def log_song(duration: float, average_similarity: float, final_score: float, time_taken: float):
-    """Logs a song entry with timestamp, title, duration, average similarity per lyric, final similarity score, and the time taken to generate the final score."""
-    log_entry = f"{duration}, {average_similarity}, {final_score}, {time_taken}"
+    """Logs a song entry with timestamp, title, duration, average similarity per lyric, final similarity score, the time taken to generate the final score, and hardware specs."""
+    log_entry = f"{duration}, {average_similarity}, {final_score}, {time_taken}, {platform.processor()}, {torch.cuda.get_device_name()}, {platform.machine()}, {platform.platform()}"
     logging.info(log_entry)
 
 similarity = 0.0
@@ -226,7 +227,9 @@ def final_score():
         with wave.open("recorded_audio.wav", "rb") as wf:
             audio_data = wf.readframes(wf.getnframes())
             audio_np = np.frombuffer(audio_data, np.int16).astype(np.float32) / 32768.0
+
             duration = wf.getnframes() / wf.getframerate()
+
             genai_result = ov_pipe.generate(audio_np)
             recognized_wav = str(genai_result).strip()
     except Exception as e:
