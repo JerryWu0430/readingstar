@@ -90,14 +90,14 @@ export default function App() {
 
                 for (const playlist of playlistData.playlists) {
                     allPlaylists[playlist?.name] = playlist.songs;
-
                 }
+                
+                await setAllPlaylistsGetter(allPlaylists);
                 setAllPlaylistNames(Object.keys(allPlaylists));
                 playlistName ?? setPlaylistName(Object.keys(allPlaylists)[0]);
-                setPlaylist(allPlaylists[playlistName]);
-                setAllPlaylistsGetter(allPlaylists);
                 console.log('Playlists loaded:', allPlaylists);
                 resolve();
+                await setPlaylist(allPlaylists[playlistName]);
             } catch (error) {
                 allPlaylists['Nursery Rhymes OG'] = [
                     {id: 0, name: 'Humpty Dumpty', url: 'https://www.youtube.com/watch?v=nrv495corBc'},
@@ -718,9 +718,9 @@ export default function App() {
                         <Text style={styles.playlistTitle}>{playlistName}</Text>
                         <ScrollView>
                             {playlistLoaded && playlist ? (
-                                playlist.map((song, index) => (
+                                playlist.map((song) => (
                                     <Pressable
-                                        key={index}
+                                        key={song.id}
                                         style={[
                                             styles.playlistItem,
                                             song.name === selectedSong && styles.playlistItemSelected,
@@ -735,7 +735,7 @@ export default function App() {
                                         >
                                             {song.name}
                                         </Text>
-                                        <SvgXml xml={deleteSvg} width={20} height={20} style={styles.iconTag} onPress={() => {removePlaylistJson(playlistName, song.name)}}/>
+                                        <SvgXml xml={deleteSvg} width={20} height={20} style={styles.iconTag} onPress={() => {removePlaylistJson(playlistName, song.name); fetchPlaylists()}}/>
                                     </Pressable>
                                 ))
                             ) : (
@@ -978,11 +978,10 @@ export default function App() {
                                                 (pressed || name == playlistName) && { backgroundColor: '#00b533' },
                                             ]}
                                             onPress={() => switchPlaylist(name)}>
-                                            
+                                            <SvgXml xml={deleteSvg} width={20} height={20} style={styles.iconTag} onPress={() => {removePlaylistJson(name, ''); fetchPlaylists()}}/>
                                             <Text style={[styles.buttonText]}>
                                                 {name}
                                             </Text>
-                                            <SvgXml xml={deleteSvg} width={20} height={20} style={styles.iconTag} onPress={() => {removePlaylistJson(name, '')}}/>
                                         </Pressable>
                                     </View>
                                 ))}
