@@ -13,6 +13,6 @@ This is for the codegen error: `$env:SKIP_CODEGEN_WINDOWS = "true"`
 
 `npx react-native run-windows`
 
-For the API: `python -m uvicorn live-match-api:app --reload`
+For the API: `python -m uvicorn live_match_api:app --reload`
 
 For unit testing the backend: `python -m unittest api_test.py`
