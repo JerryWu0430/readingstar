@@ -89,3 +89,5 @@ yarn-error.log
 # Visual Studio
 .vs/
 dist/
+
+__tests__/
