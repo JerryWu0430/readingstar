@@ -380,6 +380,8 @@ def get_match():
         if '(' in current_verse:
             # get the text between brackets
             current_verse = current_verse[:current_verse.find("(")] + current_verse[current_verse.find(")")+1:]
+        if '\n' in current_verse:
+            current_verse = current_verse.replace('\n', ' ')
     except:
         pass
 
