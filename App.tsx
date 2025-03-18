@@ -43,7 +43,6 @@ export default function App() {
     const [songTitle, setSongTitle] = useState('');
     const [isFocusMode, setIsFocusMode] = useState(false);
     const colorScheme = useColorScheme();
-    const timerRef = useRef(null);
     const [showStar, setShowStar] = useState(false);
     const [videoPlaying, setVideoPlaying] = useState(false);
     const [playlist, setPlaylist] = useState<{id: number, name: string, url: string}[]>([]); // Initial playlist [name, url]
