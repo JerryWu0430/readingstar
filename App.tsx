@@ -517,7 +517,7 @@ export default function App() {
                                                 style={[
                                                     styles.customSliderFill,
                                                     {
-                                                        width: `${((lyricsSettings.fontSize - 16) / (64 - 16)) * 100}%`
+                                                        width: `${Math.min(((lyricsSettings.fontSize - 16) / (64 - 16)) * 90, 90)}%`
                                                     }
                                                 ]} 
                                             />
@@ -565,7 +565,7 @@ export default function App() {
                                                 style={[
                                                     styles.customSliderFill,
                                                     {
-                                                        width: `${((lyricsSettings.lineSpacing - 8) / (32 - 8)) * 100}%`
+                                                        width: `${Math.min(((lyricsSettings.lineSpacing - 8) / (32 - 8)) * 90, 90)}%`
                                                     }
                                                 ]} 
                                             />
@@ -1439,18 +1439,20 @@ const styles = StyleSheet.create({
         height: 5,
         backgroundColor: '#FFD700',
         alignSelf: 'flex-start',
+        zIndex: 1,
     },
     blockIcon: {
         position: 'relative',
         display: 'flex',
+        marginRight: 20,
     },
     iconTag: {
         position: 'absolute',
-        top: 0,
-        right: 0,
-        zIndex: 1,
-        width: 12,
-        height: 12,
+        top: 8,
+        right: -20,
+        zIndex: 100,
+        width: 20,
+        height: 20,
     },
     focusButton: {
         marginLeft: 'auto',
@@ -1551,21 +1553,25 @@ const styles = StyleSheet.create({
         marginHorizontal: 8,
         position: 'relative',
         justifyContent: 'center',
+        zIndex: 1,
     },
     customSliderTrack: {
         position: 'absolute',
-        left: 16,
-        right: 16,
+        left: '5%',
+        right: '5%',
         height: 4,
         backgroundColor: '#d1d1d1',
         borderRadius: 2,
+        zIndex: 1,
     },
     customSliderFill: {
         position: 'absolute',
+        left: '5%',
         left: 16,
         height: 4,
         backgroundColor: '#0078d4',
         borderRadius: 2,
+        zIndex: 2,
     },
     customSliderButtonContainer: {
         flexDirection: 'row',
@@ -1574,6 +1580,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         alignItems: 'center',
+        zIndex: 3,
     },
     customSliderButton: {
         width: 32,
@@ -1582,6 +1589,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#0078d4',
         justifyContent: 'center',
         alignItems: 'center',
+        zIndex: 3,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 2,
     },
     customSliderButtonText: {
         color: '#fff',
