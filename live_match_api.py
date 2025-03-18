@@ -134,9 +134,14 @@ logging.basicConfig(
 )
 
 def log_song(duration: float, average_similarity: float, final_score: float, time_taken: float):
+    global device
+    logging.basicConfig(filename='song_log.log', encoding='utf-8', level=logging.DEBUG)
     """Logs a song entry with timestamp, title, duration, average similarity per lyric, final similarity score, the time taken to generate the final score, and hardware specs."""
-    log_entry = f"{duration}, {average_similarity}, {final_score}, {time_taken}, {platform.processor()}, {torch.cuda.get_device_name()}, {platform.machine()}, {platform.platform()}"
+    log_entry = f"{datetime.now()}, {duration}, {average_similarity}, {final_score}, {time_taken}, {platform.processor()}, {device}, {platform.machine()}, {platform.platform()}"
     logging.info(log_entry)
+    print(log_entry)
+    with open("song_log.log", "a") as f:
+        f.write(log_entry + "\n")
 
 similarity = 0.0
 recognized_text = ""
@@ -240,7 +245,7 @@ def final_score():
     print(f"Final similarity: {similarity}")
     print("Recognized wav: ", recognized_wav)
     
-    log_song(duration, similarity_over_song.avg(), similarity, (t-s))
+    log_song(duration, sum(similarity_over_song) / len(similarity_over_song), similarity, str(t-s))
     return JSONResponse(content={"final_score": similarity}, status_code=200)
 
 # FastAPI endpoint to post the playlist from playlists.json

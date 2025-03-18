@@ -11,6 +11,7 @@ import {
     useColorScheme,
     Animated,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import WebView from 'react-native-webview';
 import { SvgXml } from 'react-native-svg';
 import { parseString } from 'react-native-xml2js';
@@ -26,6 +27,7 @@ const microphoneSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 2
 const closeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0021b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
 const fullscreenSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z" /></svg>`;
 const focusSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" /></svg>`;
+const settingsSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04,-0.3 0.06,-0.61 0.06,-0.94c0,-0.32 -0.02,-0.64 -0.07,-0.94l2.03,-1.58c0.18,-0.14 0.23,-0.41 0.12,-0.61l-1.92,-3.32c-0.12,-0.22 -0.39,-0.29 -0.61,-0.22l-2.39,0.96c-0.5,-0.38 -1.03,-0.7 -1.62,-0.94L14.4,2.81c-0.04,-0.24 -0.24,-0.41 -0.48,-0.41h-3.84c-0.24,0 -0.43,0.17 -0.47,0.41L9.25,5.35C8.66,5.59 8.12,5.92 7.63,6.29L5.24,5.33c-0.22,-0.08 -0.49,0 -0.61,0.22L2.62,8.87C2.52,9.08 2.57,9.34 2.75,9.48l2.03,1.58C4.84,11.36 4.8,11.69 4.8,12s0.02,0.64 0.07,0.94l-2.03,1.58c-0.18,0.14 -0.23,0.41 -0.12,0.61l1.92,3.32c0.12,0.22 0.39,0.29 0.61,0.22l2.39,-0.96c0.5,0.38 1.03,0.7 1.62,0.94l0.36,2.54c0.05,0.24 0.24,0.41 0.48,0.41h3.84c0.24,0 0.44,-0.17 0.47,-0.41l0.36,-2.54c0.59,-0.24 1.13,-0.56 1.62,-0.94l2.39,0.96c0.22,0.08 0.49,0 0.61,-0.22l1.92,-3.32c0.12,-0.22 0.07,-0.47 -0.12,-0.61L19.14,12.94zM12,15.6c-1.98,0 -3.6,-1.62 -3.6,-3.6s1.62,-3.6 3.6,-3.6s3.6,1.62 3.6,3.6S13.98,15.6 12,15.6z"/></svg>`;
 
 export default function App() {
     const [score, setScore] = useState(0);
@@ -50,6 +52,26 @@ export default function App() {
     const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
     const [allPlaylistsGetter, setAllPlaylistsGetter] = useState<{ [key: string]: {id: number, name: string, url: string}[] }>({});
     const [playlistLoaded, setPlaylistLoaded] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    
+    interface LyricsSettings {
+        fontSize: number;
+        fontColor: string;
+        fontStyle: 'normal' | 'italic';
+        fontWeight: 'normal' | 'bold';
+        lineSpacing: number;
+        fontFamily: string;
+    }
+
+    const [lyricsSettings, setLyricsSettings] = useState<LyricsSettings>({
+        fontSize: 32,
+        fontColor: '#005bb5',
+        fontStyle: 'normal',
+        fontWeight: 'normal',
+        lineSpacing: 16,
+        fontFamily: 'System',
+    });
     
     const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
 
@@ -436,24 +458,251 @@ export default function App() {
             <View style={styles.titleBar}>
                 <Text style={styles.titleText}>ReadingStar</Text>
                 <SvgXml xml={starSvg} width={20} height={20} />
-                <Pressable
-                    style={({ pressed }) => [
-                        styles.focusButton,
-                        pressed && styles.focusButtonPressed,
-                        isFocusMode && styles.focusButtonActive
-                    ]}
-                    onPress={() => setIsFocusMode(!isFocusMode)}
-                >
-                    <View style={styles.focusButtonContent}>
-                        <SvgXml xml={fullscreenSvg} width={20} height={20} />
-                        <Text style={[styles.focusButtonText, isFocusMode && styles.focusButtonTextActive]}>
-                            Focus Mode
-                        </Text>
-                    </View>
-                </Pressable>
+                <View style={styles.titleBarRight}>
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.iconButton,
+                            pressed && styles.iconButtonPressed,
+                        ]}
+                        onPress={() => setShowSettingsModal(true)}
+                    >
+                        <SvgXml xml={settingsSvg} width={24} height={24} />
+                    </Pressable>
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.focusButton,
+                            pressed && styles.focusButtonPressed,
+                            isFocusMode && styles.focusButtonActive
+                        ]}
+                        onPress={() => setIsFocusMode(!isFocusMode)}
+                    >
+                        <View style={styles.focusButtonContent}>
+                            <SvgXml xml={fullscreenSvg} width={20} height={20} />
+                            <Text style={[styles.focusButtonText, isFocusMode && styles.focusButtonTextActive]}>
+                                Focus Mode
+                            </Text>
+                        </View>
+                    </Pressable>
+                </View>
             </View>
 
-            
+            {/* Settings Modal */}
+            {showSettingsModal && (
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Settings</Text>
+                            <Pressable
+                                style={({ pressed }) => [
+                                    styles.closeButton,
+                                    pressed && styles.closeButtonPressed,
+                                ]}
+                                onPress={() => setShowSettingsModal(false)}
+                            >
+                                <SvgXml xml={closeSvg} width={24} height={24} />
+                            </Pressable>
+                        </View>
+                        <ScrollView style={styles.modalScroll}>
+                            <View style={styles.settingsContainer}>
+                                <View style={styles.settingBox}>
+                                    <Text style={styles.settingLabel}>Font Size</Text>
+                                    <View style={styles.customSliderContainer}>
+                                        <Text style={styles.sliderValue}>{Math.round(lyricsSettings.fontSize)}px</Text>
+                                        <View style={styles.customSlider}>
+                                            <View style={styles.customSliderTrack} />
+                                            <View 
+                                                style={[
+                                                    styles.customSliderFill,
+                                                    {
+                                                        width: `${((lyricsSettings.fontSize - 16) / (64 - 16)) * 100}%`
+                                                    }
+                                                ]} 
+                                            />
+                                            <View style={styles.customSliderButtonContainer}>
+                                                <Pressable
+                                                    style={styles.customSliderButton}
+                                                    onPress={() => {
+                                                        const newValue = Math.max(16, lyricsSettings.fontSize - 4);
+                                                        setLyricsSettings(prev => ({
+                                                            ...prev,
+                                                            fontSize: newValue
+                                                        }));
+                                                    }}
+                                                >
+                                                    <Text style={styles.customSliderButtonText}>-</Text>
+                                                </Pressable>
+                                                <Pressable
+                                                    style={styles.customSliderButton}
+                                                    onPress={() => {
+                                                        const newValue = Math.min(64, lyricsSettings.fontSize + 4);
+                                                        setLyricsSettings(prev => ({
+                                                            ...prev,
+                                                            fontSize: newValue
+                                                        }));
+                                                    }}
+                                                >
+                                                    <Text style={styles.customSliderButtonText}>+</Text>
+                                                </Pressable>
+                                            </View>
+                                        </View>
+                                    </View>
+                                    <View style={styles.sliderLabels}>
+                                        <Text style={styles.sliderMinMax}>16px</Text>
+                                        <Text style={styles.sliderMinMax}>64px</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.settingBox}>
+                                    <Text style={styles.settingLabel}>Line Spacing</Text>
+                                    <View style={styles.customSliderContainer}>
+                                        <Text style={styles.sliderValue}>{Math.round(lyricsSettings.lineSpacing)}px</Text>
+                                        <View style={styles.customSlider}>
+                                            <View style={styles.customSliderTrack} />
+                                            <View 
+                                                style={[
+                                                    styles.customSliderFill,
+                                                    {
+                                                        width: `${((lyricsSettings.lineSpacing - 8) / (32 - 8)) * 100}%`
+                                                    }
+                                                ]} 
+                                            />
+                                            <View style={styles.customSliderButtonContainer}>
+                                                <Pressable
+                                                    style={styles.customSliderButton}
+                                                    onPress={() => {
+                                                        const newValue = Math.max(8, lyricsSettings.lineSpacing - 2);
+                                                        setLyricsSettings(prev => ({
+                                                            ...prev,
+                                                            lineSpacing: newValue
+                                                        }));
+                                                    }}
+                                                >
+                                                    <Text style={styles.customSliderButtonText}>-</Text>
+                                                </Pressable>
+                                                <Pressable
+                                                    style={styles.customSliderButton}
+                                                    onPress={() => {
+                                                        const newValue = Math.min(32, lyricsSettings.lineSpacing + 2);
+                                                        setLyricsSettings(prev => ({
+                                                            ...prev,
+                                                            lineSpacing: newValue
+                                                        }));
+                                                    }}
+                                                >
+                                                    <Text style={styles.customSliderButtonText}>+</Text>
+                                                </Pressable>
+                                            </View>
+                                        </View>
+                                    </View>
+                                    <View style={styles.sliderLabels}>
+                                        <Text style={styles.sliderMinMax}>8px</Text>
+                                        <Text style={styles.sliderMinMax}>32px</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.settingBox}>
+                                    <Text style={styles.settingLabel}>Font Style</Text>
+                                    <View style={styles.fontStyleContainer}>
+                                        {[
+                                            { style: 'normal' as const, weight: 'normal' as const, label: 'Normal' },
+                                            { style: 'italic' as const, weight: 'normal' as const, label: 'Italic' },
+                                            { style: 'normal' as const, weight: 'bold' as const, label: 'Bold' },
+                                            { style: 'italic' as const, weight: 'bold' as const, label: 'Bold Italic' }
+                                        ].map(({ style, weight, label }) => (
+                                            <Pressable
+                                                key={label}
+                                                style={({ pressed }) => [
+                                                    styles.fontStyleButton,
+                                                    lyricsSettings.fontStyle === style && lyricsSettings.fontWeight === weight && styles.fontStyleButtonActive,
+                                                    pressed && styles.fontStyleButtonPressed,
+                                                ]}
+                                                onPress={() => setLyricsSettings({
+                                                    ...lyricsSettings,
+                                                    fontStyle: style,
+                                                    fontWeight: weight
+                                                })}
+                                            >
+                                                <Text style={[
+                                                    styles.fontStyleText,
+                                                    lyricsSettings.fontStyle === style && lyricsSettings.fontWeight === weight && styles.fontStyleTextActive,
+                                                    { fontStyle: style, fontWeight: weight }
+                                                ]}>
+                                                    {label}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
+                                    </View>
+                                </View>
+
+                                <View style={styles.settingBox}>
+                                    <Text style={styles.settingLabel}>Font Color</Text>
+                                    <View style={styles.colorPickerContainer}>
+                                        {[
+                                            '#000000', // Black
+                                            '#FF0000', // Red
+                                            '#FF4500', // Orange Red
+                                            '#FFA500', // Orange
+                                            '#FFD700', // Gold/Yellow
+                                            '#32CD32', // Lime Green
+                                            '#00FF00', // Green
+                                            '#00FFFF', // Cyan
+                                            '#0000FF', // Blue
+                                            '#4B0082', // Indigo
+                                            '#800080'  // Purple
+                                        ].map((color) => (
+                                            <Pressable
+                                                key={color}
+                                                style={({ pressed }) => [
+                                                    styles.colorButton,
+                                                    { backgroundColor: color },
+                                                    lyricsSettings.fontColor === color && styles.colorButtonActive,
+                                                    pressed && styles.colorButtonPressed,
+                                                ]}
+                                                onPress={() => setLyricsSettings({...lyricsSettings, fontColor: color})}
+                                            />
+                                        ))}
+                                    </View>
+                                </View>
+
+                                <View style={styles.settingBox}>
+                                    <Text style={styles.settingLabel}>Font Family</Text>
+                                    <View style={styles.fontFamilyContainer}>
+                                        {[
+                                            { name: 'System', label: 'System Default' },
+                                            { name: 'Arial', label: 'Arial' },
+                                            { name: 'Helvetica', label: 'Helvetica' },
+                                            { name: 'Verdana', label: 'Verdana' },
+                                            { name: 'Times New Roman', label: 'Times New Roman' },
+                                            { name: 'Georgia', label: 'Georgia' },
+                                            { name: 'Courier New', label: 'Courier New' },
+                                            { name: 'Trebuchet MS', label: 'Trebuchet MS' }
+                                        ].map(({ name, label }) => (
+                                            <Pressable
+                                                key={name}
+                                                style={({ pressed }) => [
+                                                    styles.fontFamilyButton,
+                                                    lyricsSettings.fontFamily === name && styles.fontFamilyButtonActive,
+                                                    pressed && styles.fontFamilyButtonPressed,
+                                                ]}
+                                                onPress={() => setLyricsSettings({...lyricsSettings, fontFamily: name})}
+                                            >
+                                                <Text style={[
+                                                    styles.fontFamilyText,
+                                                    { fontFamily: name },
+                                                    lyricsSettings.fontFamily === name && styles.fontFamilyTextActive
+                                                ]}>
+                                                    {label}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
+                                    </View>
+                                </View>
+                            </View>
+                        </ScrollView>
+                    </View>
+                </View>
+            )}
+
             <View style={[styles.starContainer, {marginTop: 280, marginLeft: 300}]}>
                 {showStar && ( // Conditionally render the star
                         <SvgXml
@@ -661,7 +910,17 @@ export default function App() {
                     </View>
 
                     <View style={[styles.lyricsContainer, isFocusMode && styles.lyricsContainerFocus]}>
-                        <Text style={styles.lyricsText}>{removeBracketedText(currentLyric)}</Text>
+                        <Text style={[
+                            styles.lyricsText,
+                            {
+                                fontSize: lyricsSettings.fontSize,
+                                color: lyricsSettings.fontColor,
+                                fontStyle: lyricsSettings.fontStyle,
+                                fontWeight: lyricsSettings.fontWeight,
+                                lineHeight: lyricsSettings.lineSpacing + lyricsSettings.fontSize,
+                                fontFamily: lyricsSettings.fontFamily,
+                            }
+                        ]}>{removeBracketedText(currentLyric)}</Text>
                         <View style={styles.slidingBarContainer}>
                             <Animated.View
                                 style={[
@@ -709,7 +968,7 @@ export default function App() {
                                     <Text style={styles.goButtonText}>Ok</Text>
                                 </Pressable>
                             </View>
-                            <ScrollView style={{ height: 400}}>
+                            <ScrollView style={{ height: 200}}>
                                 {allPlaylistNames.map(name => (
                                     <View style={styles.blockIcon}>
                                         <Pressable
@@ -816,7 +1075,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginLeft: 'auto',
         gap: 12,
-        color: '#333',
     },
     content: {
         flex: 1,
@@ -1115,6 +1373,238 @@ const styles = StyleSheet.create({
         marginRight: 0,
         padding: 0,
         justifyContent: 'flex-start',
+    },
+    settingsContainer: {
+        padding: 8,
+    },
+    settingBox: {
+        backgroundColor: '#ffffff',
+        borderRadius: 8,
+        padding: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#dcdcdc',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        elevation: 2,
+    },
+    settingLabel: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 12,
+    },
+    customSliderContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+        width: '100%',
+    },
+    customSlider: {
+        flex: 1,
+        height: 40,
+        marginHorizontal: 8,
+        position: 'relative',
+        justifyContent: 'center',
+    },
+    customSliderTrack: {
+        position: 'absolute',
+        left: 16,
+        right: 16,
+        height: 4,
+        backgroundColor: '#d1d1d1',
+        borderRadius: 2,
+    },
+    customSliderFill: {
+        position: 'absolute',
+        left: 16,
+        height: 4,
+        backgroundColor: '#0078d4',
+        borderRadius: 2,
+    },
+    customSliderButtonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+    },
+    customSliderButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#0078d4',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    customSliderButtonText: {
+        color: '#fff',
+        fontSize: 24,
+        fontWeight: 'bold',
+        lineHeight: 24,
+        textAlign: 'center',
+        textAlignVertical: 'center',
+        includeFontPadding: false,
+        marginTop: -2, // Adjust for visual centering
+    },
+    sliderValue: {
+        width: 50,
+        textAlign: 'center',
+        color: '#666',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    sliderLabels: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 12,
+    },
+    sliderMinMax: {
+        fontSize: 12,
+        color: '#999',
+    },
+    fontStyleContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    fontStyleButton: {
+        flex: 1,
+        minWidth: '45%',
+        padding: 12,
+        borderRadius: 6,
+        backgroundColor: '#f0f0f0',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#dcdcdc',
+    },
+    fontStyleButtonActive: {
+        backgroundColor: '#0078d4',
+        borderColor: '#0078d4',
+    },
+    fontStyleButtonPressed: {
+        backgroundColor: '#e0e0e0',
+    },
+    fontStyleText: {
+        fontSize: 14,
+        color: '#666',
+    },
+    fontStyleTextActive: {
+        color: '#fff',
+    },
+    colorPickerContainer: {
+        flexDirection: 'row',
+        flexWrap: 'nowrap',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+    },
+    colorButton: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        borderWidth: 2,
+        borderColor: 'transparent',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        elevation: 2,
+    },
+    colorButtonActive: {
+        borderColor: '#0078d4',
+        transform: [{ scale: 1.1 }],
+    },
+    colorButtonPressed: {
+        opacity: 0.7,
+    },
+    iconButton: {
+        padding: 8,
+        borderRadius: 4,
+        backgroundColor: '#f0f0f0',
+    },
+    iconButtonPressed: {
+        backgroundColor: '#e0e0e0',
+    },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        width: '80%',
+        maxWidth: 500,
+        maxHeight: '80%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        elevation: 5,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#dcdcdc',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    closeButton: {
+        padding: 4,
+        borderRadius: 4,
+    },
+    closeButtonPressed: {
+        backgroundColor: '#f0f0f0',
+    },
+    modalScroll: {
+        maxHeight: '80%',
+    },
+    fontFamilyContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        paddingVertical: 4,
+    },
+    fontFamilyButton: {
+        flex: 1,
+        minWidth: '45%',
+        padding: 12,
+        borderRadius: 6,
+        backgroundColor: '#f0f0f0',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#dcdcdc',
+        marginBottom: 8,
+    },
+    fontFamilyButtonActive: {
+        backgroundColor: '#0078d4',
+        borderColor: '#0078d4',
+    },
+    fontFamilyButtonPressed: {
+        backgroundColor: '#e0e0e0',
+    },
+    fontFamilyText: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+    },
+    fontFamilyTextActive: {
+        color: '#fff',
     },
 });
 
