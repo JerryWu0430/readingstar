@@ -119,7 +119,6 @@ export default function App() {
 
     const useMountEffect = (f: () => void) => useEffect(() => { f(); }, []);
 
-
     const 
     getYoutubeEmbedUrl = async (url: string): Promise<void> => {
         const videoId: string | undefined = url.split('v=')[1];
@@ -129,7 +128,7 @@ export default function App() {
         getSongTitle(url);
         setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
-        try{
+        try {
             const response = await fetch('http://localhost:8000/close_microphone', {
                 method: 'GET',
                 headers: {
@@ -137,9 +136,8 @@ export default function App() {
                 },
             });
         }
-        catch (error) {
-            
-        }
+        catch (error) {}
+        
         try {
             const response = await fetch('http://localhost:8000/transcribe', {
                 method: 'POST',
