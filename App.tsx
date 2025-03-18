@@ -93,7 +93,7 @@ export default function App() {
                 }
                 
                 await setAllPlaylistsGetter(allPlaylists);
-                setAllPlaylistNames(Object.keys(allPlaylists));
+                await setAllPlaylistNames(Object.keys(allPlaylists));
                 playlistName ?? setPlaylistName(Object.keys(allPlaylists)[0]);
                 console.log('Playlists loaded:', allPlaylists);
                 resolve();
@@ -968,7 +968,7 @@ export default function App() {
                                 </Pressable>
                             </View>
                             <ScrollView style={{ height: 200}}>
-                                {allPlaylistNames.map(name => (
+                                {playlistLoaded ? allPlaylistNames.map(name => (
                                     <View style={styles.blockIcon}>
                                         <Pressable
                                             key={name}
@@ -978,13 +978,14 @@ export default function App() {
                                                 (pressed || name == playlistName) && { backgroundColor: '#00b533' },
                                             ]}
                                             onPress={() => switchPlaylist(name)}>
-                                            <SvgXml xml={deleteSvg} width={20} height={20} style={styles.iconTag} onPress={() => {removePlaylistJson(name, ''); fetchPlaylists()}}/>
+                                            <SvgXml xml={deleteSvg} width={20} height={20} style={[styles.iconTag, {left: 0, right: 'auto' }]} onPress={() => {removePlaylistJson(name, '')}}/>
                                             <Text style={[styles.buttonText]}>
                                                 {name}
                                             </Text>
                                         </Pressable>
                                     </View>
-                                ))}
+                                )) : <View><Text>Loading..</Text></View>
+                                }
                             </ScrollView>
                         </View>
                         <View style={styles.difficultyContainer}>
