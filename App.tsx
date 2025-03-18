@@ -10,6 +10,7 @@ import {
     TextInput,
     useColorScheme,
     Animated,
+    Image,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import WebView from 'react-native-webview';
@@ -62,6 +63,7 @@ export default function App() {
         fontWeight: 'normal' | 'bold';
         lineSpacing: number;
         fontFamily: string;
+        background: string;
     }
 
     const [lyricsSettings, setLyricsSettings] = useState<LyricsSettings>({
@@ -71,6 +73,7 @@ export default function App() {
         fontWeight: 'normal',
         lineSpacing: 16,
         fontFamily: 'System',
+        background: 'black',
     });
     
     const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
@@ -697,6 +700,47 @@ export default function App() {
                                         ))}
                                     </View>
                                 </View>
+
+                                <View style={styles.settingBox}>
+                                    <Text style={styles.settingLabel}>Background</Text>
+                                    <View style={styles.backgroundContainer}>
+                                        {[
+                                            { id: 'black', label: 'Black', color: '#000000' },
+                                            { id: 'white', label: 'White', color: '#FFFFFF' },
+                                            { id: 'curtain', label: 'Curtain', image: require('./assets/curtain.jpg') },
+                                            { id: 'stage', label: 'Stage', image: require('./assets/stage.jpg') },
+                                            { id: 'concert', label: 'Concert', image: require('./assets/concert.jpg') },
+                                        ].map((bg) => (
+                                            <Pressable
+                                                key={bg.id}
+                                                style={({ pressed }) => [
+                                                    styles.backgroundOption,
+                                                    lyricsSettings.background === bg.id && styles.backgroundOptionActive,
+                                                    pressed && styles.backgroundOptionPressed,
+                                                    bg.color && { backgroundColor: bg.color }
+                                                ]}
+                                                onPress={() => setLyricsSettings({...lyricsSettings, background: bg.id})}
+                                            >
+                                                {bg.image && (
+                                                    <Image 
+                                                        source={bg.image} 
+                                                        style={styles.backgroundPreview}
+                                                        resizeMode="cover"
+                                                    />
+                                                )}
+                                                <View style={styles.backgroundLabelContainer}>
+                                                    <Text style={[
+                                                        styles.backgroundOptionText,
+                                                        bg.color === '#000000' && { color: '#FFFFFF' },
+                                                        lyricsSettings.background === bg.id && styles.backgroundOptionTextActive
+                                                    ]}>
+                                                        {bg.label}
+                                                    </Text>
+                                                </View>
+                                            </Pressable>
+                                        ))}
+                                    </View>
+                                </View>
                             </View>
                         </ScrollView>
                     </View>
@@ -746,49 +790,43 @@ export default function App() {
                     </View>
                 )}
 
-                <View style={[styles.mainContent, isFocusMode && styles.mainContentFocus]}>
-                    <View style={[styles.scoreContainer, isFocusMode && styles.scoreContainerFocus]}>
-                        <Text style={styles.scoreText}>Score: {score}</Text>
-                    </View>
-
-                    {!isFocusMode && (
-                        <View style={styles.inputContainer}>
-                            <TextInput
-                                style={[
-                                    styles.textInput,
-                                    colorScheme === 'dark' && styles.textInputDark,
-                                ]}
-                                placeholder="Paste YouTube URL here"
-                                placeholderTextColor={colorScheme === 'dark' ? '#ccc' : '#999'}
-                                value={inputUrl}
-                                onChangeText={setInputUrl}
-                            />
-
-                            <Pressable
-                                style={({ pressed }) => [
-                                    {
-                                        backgroundColor: pressed ? '#005bb5' : '#0078d4',
-                                    },
-                                    styles.goButton,
-                                    pressed && { backgroundColor: '#005bb5' },
-                                ]}
-                                onPress={() => {
-                                    setYoutubeUrl(inputUrl);
-                                    getYoutubeEmbedUrl(inputUrl);
-                                }}
-                            >
-                                <Text style={styles.goButtonText}>Go</Text>
-                            </Pressable>
+                <View style={[
+                    styles.mainContent,
+                    isFocusMode && styles.mainContentFocus,
+                ]}>
+                    {isFocusMode && (
+                        <View style={styles.backgroundContainer}>
+                            {lyricsSettings.background === 'black' ? (
+                                <View style={[styles.solidBackground, { backgroundColor: '#000000' }]} />
+                            ) : lyricsSettings.background === 'white' ? (
+                                <View style={[styles.solidBackground, { backgroundColor: '#FFFFFF' }]} />
+                            ) : (
+                                <Image
+                                    source={
+                                        lyricsSettings.background === 'curtain' ? require('./assets/curtain.jpg') :
+                                        lyricsSettings.background === 'stage' ? require('./assets/stage.jpg') :
+                                        lyricsSettings.background === 'concert' ? require('./assets/concert.jpg') :
+                                        null
+                                    }
+                                    style={styles.backgroundImage}
+                                    resizeMode="cover"
+                                />
+                            )}
                         </View>
                     )}
 
-                    <View style={[styles.videoContainer, isFocusMode && styles.videoContainerFocus]}>
-                        {youtubeUrl ? (
-                            videoPlaying ?
-                            (<WebView
-                                style={styles.webview}
-                                source={{
-                                    html: `
+                    <View style={[styles.contentOverlay, isFocusMode && styles.contentOverlayFocus]}>
+                        <View style={[styles.scoreContainer, isFocusMode && styles.scoreContainerFocus]}>
+                            <Text style={styles.scoreText}>Score: {score}</Text>
+                        </View>
+
+                        <View style={[styles.videoContainer, isFocusMode && styles.videoContainerFocus]}>
+                            {youtubeUrl ? (
+                                videoPlaying ?
+                                (<WebView
+                                    style={styles.webview}
+                                    source={{
+                                        html: `
                 <!DOCTYPE html>
                 <html>
                   <body style="margin:0;">
@@ -840,99 +878,107 @@ export default function App() {
                   </body>
                 </html>
             `,
-                                }}
-                                javaScriptEnabled={true}
-                                onMessage={async (event) => {
-                                    const cTime = JSON.parse(event.nativeEvent.data);
-                                    if (cTime === 'video_end') {
-                                        console.log('Video ended');
-                                        setVideoPlaying(false);
-                                        try {
-                                            await fetch('http://localhost:8000/close_microphone', {
-                                                method: 'GET',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                },
-                                            });
-                                            console.log('Microphone stopped');
-                                        } catch (error) {
-                                            console.error('Failed to stop microphone:', error);
-                                        }
-                                        await new Promise(resolve => setTimeout(resolve, 1000));
-                                        try {
-                                            const response = await fetch('http://localhost:8000/final_score', {
-                                                method: 'GET',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                },
-                                            });
-                                        
-                                            if (!response.ok) {
-                                                throw new Error('Failed to fetch final score');
+                                    }}
+                                    javaScriptEnabled={true}
+                                    onMessage={async (event) => {
+                                        const cTime = JSON.parse(event.nativeEvent.data);
+                                        if (cTime === 'video_end') {
+                                            console.log('Video ended');
+                                            setVideoPlaying(false);
+                                            try {
+                                                await fetch('http://localhost:8000/close_microphone', {
+                                                    method: 'GET',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                    },
+                                                });
+                                                console.log('Microphone stopped');
+                                            } catch (error) {
+                                                console.error('Failed to stop microphone:', error);
                                             }
-                                        
-                                            const data = await response.json();
-                                            setFinalScore(data.final_score);
-                                        
-                                            console.log("Final Score:", data.final_score);
-                                        } catch (error) {
-                                            console.error("Error fetching final score:", error);
+                                            await new Promise(resolve => setTimeout(resolve, 1000));
+                                            try {
+                                                const response = await fetch('http://localhost:8000/final_score', {
+                                                    method: 'GET',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                    },
+                                                });
+                                                
+                                                if (!response.ok) {
+                                                    throw new Error('Failed to fetch final score');
+                                                }
+                                                
+                                                const data = await response.json();
+                                                setFinalScore(data.final_score);
+                                                
+                                                console.log("Final Score:", data.final_score);
+                                            } catch (error) {
+                                                console.error("Error fetching final score:", error);
+                                            }
+                                        } else {
+                                            setCurrentTime(cTime);
                                         }
-                                    } else {
-                                        setCurrentTime(cTime);
-                                    }
-                                }}
-                            />) : 
-                            (<View style={styles.overlay}>
-                                <Text style={{ fontSize: 20, textAlign: 'center' }}>
-                                    Well done for completing the song "{songTitle}"!
-                                </Text>
-                                {score > 0 ? (
+                                    }}
+                                />) : 
+                                (<View style={styles.overlay}>
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
-                                        You won {score} points!
+                                        Well done for completing the song "{songTitle}"!
                                     </Text>
-                                ) : null}
-                                {finalScore > 0 ? (
+                                    {score > 0 ? (
+                                        <Text style={{ fontSize: 20, textAlign: 'center' }}>
+                                            You won {score} points!
+                                        </Text>
+                                    ) : null}
+                                    {finalScore > 0 ? (
+                                        <Text style={{ fontSize: 20, textAlign: 'center' }}>
+                                            You were {Math.round(finalScore * 100)}% accurate!
+                                        </Text>
+                                    ) : null}
+                                </View>
+                                )
+                            ) : (
+                                <View style={styles.overlay}>
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
-                                        You were {Math.round(finalScore * 100)}% accurate!
+                                        Click the sidebar or enter a YouTube link to start!
                                     </Text>
-                                ) : null}
-                            </View>
-                            )
-                        ) : (
-                            <View style={styles.overlay}>
-                                <Text style={{ fontSize: 20, textAlign: 'center' }}>
-                                    Click the sidebar or enter a YouTube link to start!
-                                </Text>
-                            </View>
-                        )}
-                        <View style={styles.overlay} />
-                    </View>
+                                </View>
+                            )}
+                            <View style={styles.overlay} />
+                        </View>
 
-                    <View style={[styles.lyricsContainer, isFocusMode && styles.lyricsContainerFocus]}>
-                        <Text style={[
-                            styles.lyricsText,
-                            {
-                                fontSize: lyricsSettings.fontSize,
-                                color: lyricsSettings.fontColor,
-                                fontStyle: lyricsSettings.fontStyle,
-                                fontWeight: lyricsSettings.fontWeight,
-                                lineHeight: lyricsSettings.lineSpacing + lyricsSettings.fontSize,
-                                fontFamily: lyricsSettings.fontFamily,
-                            }
-                        ]}>{removeBracketedText(currentLyric)}</Text>
-                        <View style={styles.slidingBarContainer}>
-                            <Animated.View
-                                style={[
-                                    styles.slidingBar,
-                                    {
-                                        width: animatedValue.interpolate({
-                                            inputRange: [0, 1],
-                                            outputRange: ['0%', '100%'],
-                                        }),
-                                    },
-                                ]}
-                            />
+                        <View style={[
+                            styles.lyricsContainer, 
+                            isFocusMode && styles.lyricsContainerFocus,
+                            isFocusMode && (lyricsSettings.background !== 'white') && styles.lyricsContainerDark
+                        ]}>
+                            <Text style={[
+                                styles.lyricsText,
+                                {
+                                    fontSize: lyricsSettings.fontSize,
+                                    color: lyricsSettings.fontColor,
+                                    fontStyle: lyricsSettings.fontStyle,
+                                    fontWeight: lyricsSettings.fontWeight,
+                                    lineHeight: lyricsSettings.lineSpacing + lyricsSettings.fontSize,
+                                    fontFamily: lyricsSettings.fontFamily,
+                                },
+                                isFocusMode && (lyricsSettings.background !== 'white') && styles.lyricsTextLight
+                            ]}>
+                                {removeBracketedText(currentLyric)}
+                            </Text>
+                            <View style={styles.slidingBarContainer}>
+                                <Animated.View
+                                    style={[
+                                        styles.slidingBar,
+                                        {
+                                            width: animatedValue.interpolate({
+                                                inputRange: [0, 1],
+                                                outputRange: ['0%', '100%'],
+                                            }),
+                                        },
+                                    ]}
+                                />
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -1136,9 +1182,11 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 16,
         right: 16,
-        zIndex: 10,
+        zIndex: 4,
         marginBottom: 0,
-        padding: 8,
+        padding: 12,
+        backgroundColor: 'rgba(0, 91, 181, 0.9)',
+        backdropFilter: 'blur(8px)',
     },
     scoreText: {
         fontSize: 24,
@@ -1159,11 +1207,20 @@ const styles = StyleSheet.create({
         marginVertical: 8,
     },
     videoContainerFocus: {
-        maxWidth: 1400,
-        maxHeight: 600,
-        marginTop: 15,
-        marginBottom: 2,
-        borderRadius: 0,
+        maxWidth: '80%',
+        width: '80%',
+        aspectRatio: 16 / 9,
+        alignSelf: 'center',
+        marginTop: 40,
+        marginBottom: 20,
+        borderRadius: 12,
+        overflow: 'hidden',
+        zIndex: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 10,
     },
     webview: {
         flex: 1,
@@ -1196,8 +1253,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
     lyricsContainerFocus: {
-        marginTop: 16,
+        marginTop: 20,
         paddingHorizontal: 32,
+        paddingVertical: 20,
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        borderRadius: 16,
+        maxWidth: '90%',
+        width: '90%',
+        alignSelf: 'center',
+        zIndex: 3,
+    },
+    lyricsContainerDark: {
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
     lyricsText: {
         fontSize: 32,
@@ -1309,14 +1377,14 @@ const styles = StyleSheet.create({
         color: '#444',
     },
     starContainer: {
-        position: 'absolute', // Position the star overlay
+        position: 'absolute',
         top: '50%',
         left: '50%',
-        transform: [{ translateX: -50 }, { translateY: -50 }], // Center the star
-        zIndex: 10, // Ensure it's above other components
+        transform: [{ translateX: -50 }, { translateY: -50 }],
+        zIndex: 10,
     },
     star: {
-        opacity: 1, // Optional styling for animation
+        opacity: 1,
     },
     slidingBarContainer: {
         width: '100%',
@@ -1372,7 +1440,40 @@ const styles = StyleSheet.create({
         marginLeft: 0,
         marginRight: 0,
         padding: 0,
-        justifyContent: 'flex-start',
+        flex: 1,
+        position: 'relative',
+        overflow: 'hidden',
+    },
+    backgroundContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1,
+    },
+    solidBackground: {
+        width: '100%',
+        height: '100%',
+    },
+    backgroundImage: {
+        width: '100%',
+        height: '100%',
+        position: 'absolute',
+    },
+    contentOverlay: {
+        flex: 1,
+        position: 'relative',
+        zIndex: 2,
+    },
+    contentOverlayFocus: {
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    },
+    lyricsTextLight: {
+        color: '#FFFFFF',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: { width: 2, height: 2 },
+        textShadowRadius: 5,
     },
     settingsContainer: {
         padding: 8,
@@ -1448,7 +1549,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         textAlignVertical: 'center',
         includeFontPadding: false,
-        marginTop: -2, // Adjust for visual centering
+        marginTop: -2,
     },
     sliderValue: {
         width: 50,
@@ -1605,6 +1706,59 @@ const styles = StyleSheet.create({
     },
     fontFamilyTextActive: {
         color: '#fff',
+    },
+    backgroundContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        justifyContent: 'space-between',
+    },
+    backgroundOption: {
+        width: '47%',
+        height: 120,
+        borderRadius: 8,
+        overflow: 'hidden',
+        borderWidth: 2,
+        borderColor: '#dcdcdc',
+        marginBottom: 16,
+        position: 'relative',
+    },
+    backgroundOptionActive: {
+        borderColor: '#0078d4',
+        borderWidth: 3,
+    },
+    backgroundOptionPressed: {
+        opacity: 0.8,
+    },
+    backgroundPreview: {
+        width: '100%',
+        height: '100%',
+        position: 'absolute',
+    },
+    backgroundLabelContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        color: '#FFFFFF',
+        padding: 4,
+        fontSize: 12,
+        textAlign: 'center',
+    },
+    backgroundOptionText: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        color: '#FFFFFF',
+        padding: 4,
+        fontSize: 12,
+        textAlign: 'center',
+    },
+    backgroundOptionTextActive: {
+        backgroundColor: 'rgba(0, 120, 212, 0.8)',
     },
 });
 
