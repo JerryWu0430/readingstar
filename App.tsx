@@ -638,21 +638,17 @@ export default function App() {
                                     <Text style={styles.settingLabel}>Font Color</Text>
                                     <View style={styles.colorPickerContainer}>
                                         {[
-                                            '#005bb5', // Blue
-                                            '#FFD700', // Gold
+                                            '#000000', // Black
                                             '#FF0000', // Red
-                                            '#00FF00', // Green
-                                            '#0000FF', // Blue
-                                            '#800080', // Purple
-                                            '#FFA500', // Orange
-                                            '#FF1493', // Deep Pink
-                                            '#00FFFF', // Cyan
                                             '#FF4500', // Orange Red
+                                            '#FFA500', // Orange
+                                            '#FFD700', // Gold/Yellow
                                             '#32CD32', // Lime Green
-                                            '#FF69B4', // Hot Pink
+                                            '#00FF00', // Green
+                                            '#00FFFF', // Cyan
+                                            '#0000FF', // Blue
                                             '#4B0082', // Indigo
-                                            '#8B4513', // Saddle Brown
-                                            '#2F4F4F'  // Dark Slate Gray
+                                            '#800080'  // Purple
                                         ].map((color) => (
                                             <Pressable
                                                 key={color}
@@ -1501,22 +1497,22 @@ const styles = StyleSheet.create({
     },
     colorPickerContainer: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-        justifyContent: 'center',
+        flexWrap: 'nowrap',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         paddingVertical: 8,
+        paddingHorizontal: 16,
     },
     colorButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+        width: 28,
+        height: 28,
+        borderRadius: 14,
         borderWidth: 2,
         borderColor: 'transparent',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.2,
         elevation: 2,
-        margin: 2,
     },
     colorButtonActive: {
         borderColor: '#0078d4',
