@@ -61,6 +61,7 @@ export default function App() {
         fontStyle: 'normal' | 'italic';
         fontWeight: 'normal' | 'bold';
         lineSpacing: number;
+        fontFamily: string;
     }
 
     const [lyricsSettings, setLyricsSettings] = useState<LyricsSettings>({
@@ -69,6 +70,7 @@ export default function App() {
         fontStyle: 'normal',
         fontWeight: 'normal',
         lineSpacing: 16,
+        fontFamily: 'System',
     });
     
     const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
@@ -635,7 +637,23 @@ export default function App() {
                                 <View style={styles.settingBox}>
                                     <Text style={styles.settingLabel}>Font Color</Text>
                                     <View style={styles.colorPickerContainer}>
-                                        {['#005bb5', '#FFD700', '#FF0000', '#00FF00', '#0000FF'].map((color) => (
+                                        {[
+                                            '#005bb5', // Blue
+                                            '#FFD700', // Gold
+                                            '#FF0000', // Red
+                                            '#00FF00', // Green
+                                            '#0000FF', // Blue
+                                            '#800080', // Purple
+                                            '#FFA500', // Orange
+                                            '#FF1493', // Deep Pink
+                                            '#00FFFF', // Cyan
+                                            '#FF4500', // Orange Red
+                                            '#32CD32', // Lime Green
+                                            '#FF69B4', // Hot Pink
+                                            '#4B0082', // Indigo
+                                            '#8B4513', // Saddle Brown
+                                            '#2F4F4F'  // Dark Slate Gray
+                                        ].map((color) => (
                                             <Pressable
                                                 key={color}
                                                 style={({ pressed }) => [
@@ -646,6 +664,40 @@ export default function App() {
                                                 ]}
                                                 onPress={() => setLyricsSettings({...lyricsSettings, fontColor: color})}
                                             />
+                                        ))}
+                                    </View>
+                                </View>
+
+                                <View style={styles.settingBox}>
+                                    <Text style={styles.settingLabel}>Font Family</Text>
+                                    <View style={styles.fontFamilyContainer}>
+                                        {[
+                                            { name: 'System', label: 'System Default' },
+                                            { name: 'Arial', label: 'Arial' },
+                                            { name: 'Helvetica', label: 'Helvetica' },
+                                            { name: 'Verdana', label: 'Verdana' },
+                                            { name: 'Times New Roman', label: 'Times New Roman' },
+                                            { name: 'Georgia', label: 'Georgia' },
+                                            { name: 'Courier New', label: 'Courier New' },
+                                            { name: 'Trebuchet MS', label: 'Trebuchet MS' }
+                                        ].map(({ name, label }) => (
+                                            <Pressable
+                                                key={name}
+                                                style={({ pressed }) => [
+                                                    styles.fontFamilyButton,
+                                                    lyricsSettings.fontFamily === name && styles.fontFamilyButtonActive,
+                                                    pressed && styles.fontFamilyButtonPressed,
+                                                ]}
+                                                onPress={() => setLyricsSettings({...lyricsSettings, fontFamily: name})}
+                                            >
+                                                <Text style={[
+                                                    styles.fontFamilyText,
+                                                    { fontFamily: name },
+                                                    lyricsSettings.fontFamily === name && styles.fontFamilyTextActive
+                                                ]}>
+                                                    {label}
+                                                </Text>
+                                            </Pressable>
                                         ))}
                                     </View>
                                 </View>
@@ -870,6 +922,7 @@ export default function App() {
                                 fontStyle: lyricsSettings.fontStyle,
                                 fontWeight: lyricsSettings.fontWeight,
                                 lineHeight: lyricsSettings.lineSpacing + lyricsSettings.fontSize,
+                                fontFamily: lyricsSettings.fontFamily,
                             }
                         ]}>{removeBracketedText(currentLyric)}</Text>
                         <View style={styles.slidingBarContainer}>
@@ -1449,19 +1502,21 @@ const styles = StyleSheet.create({
     colorPickerContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 12,
+        gap: 8,
         justifyContent: 'center',
+        paddingVertical: 8,
     },
     colorButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         borderWidth: 2,
         borderColor: 'transparent',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.2,
         elevation: 2,
+        margin: 2,
     },
     colorButtonActive: {
         borderColor: '#0078d4',
@@ -1522,6 +1577,38 @@ const styles = StyleSheet.create({
     },
     modalScroll: {
         maxHeight: '80%',
+    },
+    fontFamilyContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        paddingVertical: 4,
+    },
+    fontFamilyButton: {
+        flex: 1,
+        minWidth: '45%',
+        padding: 12,
+        borderRadius: 6,
+        backgroundColor: '#f0f0f0',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#dcdcdc',
+        marginBottom: 8,
+    },
+    fontFamilyButtonActive: {
+        backgroundColor: '#0078d4',
+        borderColor: '#0078d4',
+    },
+    fontFamilyButtonPressed: {
+        backgroundColor: '#e0e0e0',
+    },
+    fontFamilyText: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+    },
+    fontFamilyTextActive: {
+        color: '#fff',
     },
 });
 
