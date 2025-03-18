@@ -73,7 +73,7 @@ export default function App() {
         fontWeight: 'normal',
         lineSpacing: 16,
         fontFamily: 'System',
-        background: 'black',
+        background: 'curtain',
     });
     
     const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
@@ -703,7 +703,7 @@ export default function App() {
 
                                 <View style={styles.settingBox}>
                                     <Text style={styles.settingLabel}>Background</Text>
-                                    <View style={styles.backgroundContainer}>
+                                    <View style={styles.backgroundOptionsContainer}>
                                         {[
                                             { id: 'black', label: 'Black', color: '#000000' },
                                             { id: 'white', label: 'White', color: '#FFFFFF' },
@@ -792,10 +792,10 @@ export default function App() {
 
                 <View style={[
                     styles.mainContent,
-                    isFocusMode && styles.mainContentFocus,
+                    isFocusMode ? styles.mainContentFocus : null,
                 ]}>
                     {isFocusMode && (
-                        <View style={styles.backgroundContainer}>
+                        <View style={styles.fullscreenBackground}>
                             {lyricsSettings.background === 'black' ? (
                                 <View style={[styles.solidBackground, { backgroundColor: '#000000' }]} />
                             ) : lyricsSettings.background === 'white' ? (
@@ -815,12 +815,44 @@ export default function App() {
                         </View>
                     )}
 
-                    <View style={[styles.contentOverlay, isFocusMode && styles.contentOverlayFocus]}>
-                        <View style={[styles.scoreContainer, isFocusMode && styles.scoreContainerFocus]}>
+                    <View style={[styles.contentOverlay, isFocusMode ? styles.contentOverlayFocus : null]}>
+                        <View style={[styles.scoreContainer, isFocusMode ? styles.scoreContainerFocus : null]}>
                             <Text style={styles.scoreText}>Score: {score}</Text>
                         </View>
 
-                        <View style={[styles.videoContainer, isFocusMode && styles.videoContainerFocus]}>
+                        {/* Add this section for URL input */}
+                        {!isFocusMode && (
+                            <View style={styles.inputContainer}>
+                                <TextInput
+                                    style={[
+                                        styles.textInput,
+                                        colorScheme === 'dark' && styles.textInputDark,
+                                    ]}
+                                    value={inputUrl}
+                                    onChangeText={setInputUrl}
+                                    placeholder="Enter YouTube URL"
+                                    placeholderTextColor={colorScheme === 'dark' ? '#ccc' : '#999'}
+                                />
+                                <Pressable
+                                    style={({ pressed }) => [
+                                        styles.goButton,
+                                        pressed && { backgroundColor: '#005bb5' },
+                                    ]}
+                                    onPress={() => {
+                                        setYoutubeUrl(inputUrl);
+                                        getYoutubeEmbedUrl(inputUrl);
+                                        setInputUrl('');
+                                    }}
+                                >
+                                    <Text style={styles.goButtonText}>Go</Text>
+                                </Pressable>
+                            </View>
+                        )}
+
+                        <View style={[
+                            styles.videoContainer,
+                            isFocusMode ? styles.videoContainerFocus : null
+                        ]}>
                             {youtubeUrl ? (
                                 videoPlaying ?
                                 (<WebView
@@ -949,7 +981,7 @@ export default function App() {
 
                         <View style={[
                             styles.lyricsContainer, 
-                            isFocusMode && styles.lyricsContainerFocus,
+                            isFocusMode ? styles.lyricsContainerFocus : null,
                             isFocusMode && (lyricsSettings.background !== 'white') && styles.lyricsContainerDark
                         ]}>
                             <Text style={[
@@ -1164,15 +1196,16 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
+        backgroundColor: '#f8f9fa', // Add default background color for non-focus mode
     },
     scoreContainer: {
         backgroundColor: '#005bb5',
-        padding: 16,
+        padding: 12,
         borderRadius: 8,
         borderWidth: 1,
         borderColor: '#dcdcdc',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
@@ -1200,19 +1233,21 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         position: 'relative',
         width: '100%',
-        maxWidth: 800,
+        maxWidth: 900,
         maxHeight: 450,
         alignSelf: 'center',
         flex: 0,
-        marginVertical: 8,
+        marginVertical: 2,
     },
     videoContainerFocus: {
-        maxWidth: '80%',
-        width: '80%',
+        position: 'relative',
+        width: '100%',
+        maxWidth: 1000,
+        maxHeight: 550,
         aspectRatio: 16 / 9,
         alignSelf: 'center',
-        marginTop: 40,
-        marginBottom: 20,
+        marginTop: 20,
+        marginBottom: 10,
         borderRadius: 12,
         overflow: 'hidden',
         zIndex: 3,
@@ -1253,9 +1288,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
     lyricsContainerFocus: {
-        marginTop: 20,
+        marginTop: 10,
         paddingHorizontal: 32,
-        paddingVertical: 20,
+        paddingVertical: 16,
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         borderRadius: 16,
@@ -1346,7 +1381,11 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 8,
+        paddingHorizontal: 0,
+        width: '100%',
+        maxWidth: 800,
+        alignSelf: 'center',
     },
     textInput: {
         flex: 1,
@@ -1354,17 +1393,18 @@ const styles = StyleSheet.create({
         borderColor: '#d1d1d1',
         borderWidth: 1,
         borderRadius: 4,
-        paddingHorizontal: 8,
+        paddingHorizontal: 12,
         paddingVertical: 8,
         marginRight: 8,
-        textAlignVertical: 'center',
-
+        backgroundColor: '#ffffff',
     },
     goButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
+        height: 40,
+        paddingHorizontal: 16,
         borderRadius: 4,
         backgroundColor: '#0078d4',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     goButtonText: {
         color: '#fff',
@@ -1373,8 +1413,9 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     textInputDark: {
-        backgroundColor: '#fff',
-        color: '#444',
+        backgroundColor: '#333',
+        color: '#fff',
+        borderColor: '#666',
     },
     starContainer: {
         position: 'absolute',
@@ -1443,8 +1484,9 @@ const styles = StyleSheet.create({
         flex: 1,
         position: 'relative',
         overflow: 'hidden',
+        backgroundColor: 'transparent', // Remove background color in focus mode
     },
-    backgroundContainer: {
+    fullscreenBackground: {
         position: 'absolute',
         top: 0,
         left: 0,
@@ -1707,7 +1749,7 @@ const styles = StyleSheet.create({
     fontFamilyTextActive: {
         color: '#fff',
     },
-    backgroundContainer: {
+    backgroundOptionsContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 8,
