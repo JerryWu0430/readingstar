@@ -8,11 +8,12 @@ from unittest.mock import patch, MagicMock, mock_open
 from unittest import mock
 from fastapi.testclient import TestClient
 from io import BytesIO
+from datetime import datetime
 
 # Import the FastAPI app
 import sys
 sys.path.append('.')  
-from live_match_api import app, embedding_similarity_ov
+from live_match_api import app, embedding_similarity_ov, save_audio_to_file, log_song
 
 class TestLiveMatchAPI(unittest.TestCase):
     def setUp(self):
@@ -81,6 +82,48 @@ class TestLiveMatchAPI(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn("final_score", response.json())
             self.assertAlmostEqual(response.json()["final_score"], 0.85)
+
+    @patch("live_match_api.recorder.listen_in_background")
+    @patch("live_match_api.ov_pipe")
+    @patch("live_match_api.data_queue")
+    def test_process_audio(self, mock_data_queue, mock_ov_pipe, mock_listen):
+        '''Test the process_audio endpoint'''
+        # Mock the recorder.listen_in_background
+        mock_listen.return_value = MagicMock()
+        
+        # Simulate the queue having an audio chunk
+        mock_data_queue.empty.return_value = False
+        mock_data_queue.get.return_value = b"fake_audio_data"
+        mock_data_queue.queue = [b"fake_audio_data"]
+        
+        # Mock OpenVINO pipeline 
+        mock_ov_pipe.generate.return_value = "Test transcription output"
+        
+        # Call the endpoint
+        response = self.client.post("/transcribe")
+        
+        assert response.status_code == 200
+
+    @patch("wave.open")
+    def test_save_audio_to_file(self, mock_wave_open):
+        '''Test the save_audio_to_file function'''
+        mock_wave_file = MagicMock()
+        mock_wave_open.return_value.__enter__.return_value = mock_wave_file
+        
+        # Fake audio bytes
+        fake_audio_bytes = b"\x00\x01\x02\x03"
+        
+        save_audio_to_file(fake_audio_bytes)
+        
+        # Ensure wave.open is called with the correct filename and mode
+        mock_wave_open.assert_called_once_with("recorded_audio.wav", "wb")
+        
+        # Check that correct methods were called on the wave file
+        mock_wave_file.setnchannels.assert_called_once_with(1)
+        mock_wave_file.setsampwidth.assert_called_once_with(2)
+        mock_wave_file.setframerate.assert_called_once_with(16000)
+        mock_wave_file.writeframes.assert_called_once_with(fake_audio_bytes)
+
     
     @patch("os.path.join")
     @patch("builtins.open", new_callable=mock_open, read_data=json.dumps({"playlists": []}))
@@ -218,7 +261,7 @@ class TestLiveMatchAPI(unittest.TestCase):
     @patch("live_match_api.recognized_text", "Test current verse")
     @patch("live_match_api.threshold", 0.7)
     @patch("live_match_api.current_match", {"similarity": 0.6})
-    def test_get_match(self, mock_matcher):
+    def test_get_match_fail(self, mock_matcher):
         """Test the match endpoint"""
         # Set up mock values for SequenceMatcher
         mock_ratio = MagicMock()
