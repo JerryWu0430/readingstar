@@ -87,6 +87,7 @@ class TestLiveMatchAPI(unittest.TestCase):
     @patch("live_match_api.ov_pipe")
     @patch("live_match_api.data_queue")
     def test_process_audio(self, mock_data_queue, mock_ov_pipe, mock_listen):
+        '''Test the process_audio endpoint'''
         # Mock the recorder.listen_in_background
         mock_listen.return_value = MagicMock()
         
@@ -95,25 +96,23 @@ class TestLiveMatchAPI(unittest.TestCase):
         mock_data_queue.get.return_value = b"fake_audio_data"
         mock_data_queue.queue = [b"fake_audio_data"]
         
-        # Mock OpenVINO pipeline response
+        # Mock OpenVINO pipeline 
         mock_ov_pipe.generate.return_value = "Test transcription output"
         
         # Call the endpoint
         response = self.client.post("/transcribe")
         
-        # Assertions
         assert response.status_code == 200
 
     @patch("wave.open")
     def test_save_audio_to_file(self, mock_wave_open):
-        # Mock wave file handle
+        '''Test the save_audio_to_file function'''
         mock_wave_file = MagicMock()
         mock_wave_open.return_value.__enter__.return_value = mock_wave_file
         
         # Fake audio bytes
         fake_audio_bytes = b"\x00\x01\x02\x03"
         
-        # Call function
         save_audio_to_file(fake_audio_bytes)
         
         # Ensure wave.open is called with the correct filename and mode
