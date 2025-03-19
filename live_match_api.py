@@ -3,7 +3,6 @@ import sys
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from datetime import datetime
 from queue import Queue
 from difflib import SequenceMatcher
 import numpy as np
@@ -20,7 +19,6 @@ from transformers import AutoTokenizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 from torch import no_grad
-import logging
 import platform
 
 # Set up OpenVINO and device
@@ -118,26 +116,16 @@ class ThresholdLevel(BaseModel):
 
 app = FastAPI()
 
-import logging
 from datetime import datetime
 
-# Configure logging
-logging.basicConfig(
-    filename='song_log.log', 
-    level=logging.INFO, 
-    format='%(asctime)s | %(message)s', 
-    datefmt='%Y-%m-%d %H:%M:%S.%f'
-)
-
-def log_song(duration: float, average_similarity: float, final_score: float, time_taken: float):
+def log_song(duration: float, average_similarity: float, final_score: float, time_taken):
     global device
-    logging.basicConfig(filename='song_log.log', encoding='utf-8', level=logging.DEBUG)
     """Logs a song entry with timestamp, title, duration, average similarity per lyric, final similarity score, the time taken to generate the final score, and hardware specs."""
     log_entry = f"{datetime.now()}, {duration}, {average_similarity}, {final_score}, {time_taken}, {platform.processor()}, {device}, {platform.machine()}, {platform.platform()}"
-    logging.info(log_entry)
-    print(log_entry)
     with open("song_log.log", "a") as f:
         f.write(log_entry + "\n")
+        print(log_entry)
+        f.close()
 
 similarity = 0.0
 recognized_text = ""
@@ -241,7 +229,7 @@ def final_score():
     print(f"Final similarity: {similarity}")
     print("Recognized wav: ", recognized_wav)
     
-    log_song(duration, sum(similarity_over_song) / len(similarity_over_song), similarity, str(t-s))
+    log_song(duration, sum(similarity_over_song) / len(similarity_over_song), similarity, (t-s))
     return JSONResponse(content={"final_score": similarity}, status_code=200)
 
 # FastAPI endpoint to post the playlist from playlists.json

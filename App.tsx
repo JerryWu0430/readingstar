@@ -127,6 +127,7 @@ export default function App() {
         getSongTitle(url);
         setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
+        setFinalScore(-1);
         try {
             const response = await fetch('http://localhost:8000/close_microphone', {
                 method: 'GET',

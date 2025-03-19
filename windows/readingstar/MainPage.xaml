@@ -10,7 +10,7 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     <react:ReactRootView 
         x:Name="ReactRootView"
-        ComponentName="readingstar"
+        ComponentName="ReadingStar"
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
         MinHeight="400"/>
 </Page>
