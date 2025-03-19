@@ -91,3 +91,4 @@ yarn-error.log
 dist/
 
 __tests__/
+/__pycache__
