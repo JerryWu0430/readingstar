@@ -91,4 +91,8 @@ yarn-error.log
 dist/
 
 __tests__/
-/__pycache__
+*.log
+/windows
+__pycache__/
+*.pyc
+windows/

@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from queue import Queue
 from difflib import SequenceMatcher
+from datetime import datetime
 import numpy as np
 import openvino_genai as ov_genai
 import speech_recognition as sr
@@ -115,8 +116,6 @@ class ThresholdLevel(BaseModel):
     level: str
 
 app = FastAPI()
-
-from datetime import datetime
 
 def log_song(duration: float, average_similarity: float, final_score: float, time_taken):
     global device
