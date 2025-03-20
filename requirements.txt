@@ -13,5 +13,5 @@ pip install sentence_transformers
 pip install scikit-learn
 pip install pytest
 pip install httpx
-
+pip install coverage
 
