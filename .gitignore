@@ -89,3 +89,11 @@ yarn-error.log
 # Visual Studio
 .vs/
 dist/
+
+__tests__/
+*.log
+/windows
+__pycache__/
+*.pyc
+windows/
+*.pyc

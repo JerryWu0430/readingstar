@@ -3,9 +3,9 @@ import sys
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from datetime import datetime, timedelta
 from queue import Queue
 from difflib import SequenceMatcher
+from datetime import datetime
 import numpy as np
 import openvino_genai as ov_genai
 import speech_recognition as sr
@@ -15,14 +15,11 @@ import json
 import multiprocessing
 import wave
 import io
-from openvino.runtime import Core
 from optimum.intel.openvino import OVModelForFeatureExtraction
 from transformers import AutoTokenizer
-import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
-import torch
-import logging
+from torch import no_grad
 import platform
 
 # Set up OpenVINO and device
@@ -55,11 +52,9 @@ recorder = sr.Recognizer()
 recorder.energy_threshold = energy_threshold
 recorder.dynamic_energy_threshold = True
 
-
 # Shared variables
 prev_verse = ""  # The previous lyric phrase
 current_verse = ""  # The current lyric phrase
-data_queue = Queue()
 current_match = {"text": None, "similarity": 0.0}
 source = sr.Microphone(sample_rate=16000)
 
@@ -92,7 +87,7 @@ def embedding_similarity_ov(text1, text2):
     '''
     inputs = tokenizer([text1, text2], padding=True, truncation=True, return_tensors="pt")
 
-    with torch.no_grad(): 
+    with no_grad(): 
         outputs = ov_model(**inputs)
 
     embeddings = outputs.last_hidden_state.mean(dim=1).detach().numpy()
@@ -122,26 +117,14 @@ class ThresholdLevel(BaseModel):
 
 app = FastAPI()
 
-import logging
-from datetime import datetime
-
-# Configure logging
-logging.basicConfig(
-    filename='song_log.log', 
-    level=logging.INFO, 
-    format='%(asctime)s | %(message)s', 
-    datefmt='%Y-%m-%d %H:%M:%S.%f'
-)
-
-def log_song(duration: float, average_similarity: float, final_score: float, time_taken: float):
+def log_song(duration: float, average_similarity: float, final_score: float, time_taken):
     global device
-    logging.basicConfig(filename='song_log.log', encoding='utf-8', level=logging.DEBUG)
     """Logs a song entry with timestamp, title, duration, average similarity per lyric, final similarity score, the time taken to generate the final score, and hardware specs."""
     log_entry = f"{datetime.now()}, {duration}, {average_similarity}, {final_score}, {time_taken}, {platform.processor()}, {device}, {platform.machine()}, {platform.platform()}"
-    logging.info(log_entry)
-    print(log_entry)
     with open("song_log.log", "a") as f:
         f.write(log_entry + "\n")
+        print(log_entry)
+        f.close()
 
 similarity = 0.0
 recognized_text = ""
@@ -245,7 +228,7 @@ def final_score():
     print(f"Final similarity: {similarity}")
     print("Recognized wav: ", recognized_wav)
     
-    log_song(duration, sum(similarity_over_song) / len(similarity_over_song), similarity, str(t-s))
+    log_song(duration, sum(similarity_over_song) / len(similarity_over_song), similarity, (t-s))
     return JSONResponse(content={"final_score": similarity}, status_code=200)
 
 # FastAPI endpoint to post the playlist from playlists.json

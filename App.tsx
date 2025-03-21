@@ -4,7 +4,6 @@ import {
     Text,
     ScrollView,
     Pressable,
-    Button,
     StyleSheet,
     SafeAreaView,
     TextInput,
@@ -79,10 +78,6 @@ export default function App() {
     
     const allPlaylists: { [key: string]: {id: number, name: string, url: string}[] } = {};
 
-    interface YoutubeUrl {
-        url: string;
-    }
-
     const fetchPlaylists = () => {
         return new Promise<void>(async (resolve, reject) => {
             setPlaylistLoaded(false);
@@ -124,8 +119,7 @@ export default function App() {
 
     const useMountEffect = (f: () => void) => useEffect(() => { f(); }, []);
 
-    const 
-    getYoutubeEmbedUrl = async (url: string): Promise<void> => {
+    const getYoutubeEmbedUrl = async (url: string): Promise<void> => {
         const videoId: string | undefined = url.split('v=')[1];
         const ampersandPosition: number = videoId ? videoId.indexOf('&') : -1;
         const finalVideoId: string | undefined = ampersandPosition !== -1 ? videoId.substring(0, ampersandPosition) : videoId;
@@ -133,6 +127,7 @@ export default function App() {
         getSongTitle(url);
         setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
+        setFinalScore(-1);
         try {
             const response = await fetch('http://localhost:8000/close_microphone', {
                 method: 'GET',
@@ -244,10 +239,6 @@ export default function App() {
         } catch (error) {
             console.error('Error creating playlist:', error);
         }
-    }
-
-    const songInPlaylist = (song: string) => {
-        return playlist.find((item) => item.name === song) ? true : false;
     }
 
     const getSongTitle = async (url : string) => {
@@ -433,6 +424,9 @@ export default function App() {
         }
         if (lyric.includes('(') && lyric.includes(')')) {
             return lyric.replace(/\(.*?\)/g, '');
+        }
+        if (lyric.includes('\n')) {
+            return lyric.replace(/\n/g, ' ');
         }
         return lyric;
     }
