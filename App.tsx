@@ -354,18 +354,20 @@ export default function App() {
                         time: parseFloat(item.$.start),
                     }));
                     setLyrics(lyricsArray);
-                    try{
-                        //call Post method full_lyrics to provide lyrics
-                        await fetch('http://localhost:8000/full_lyric', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ lyric: lyricsArray}),
-                        });
-                    }
-                    catch (error) {
-                        console.error('Error setting lyrics:', error);
+                    if (lyricsArray.length > 0) {
+                        try{
+                            //call Post method full_lyrics to provide lyrics
+                            await fetch('http://localhost:8000/full_lyric', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ lyric: lyricsArray}),
+                            });
+                        }
+                        catch (error) {
+                            console.error('Error setting lyrics:', error);
+                        }
                     }
                 });
             }
@@ -973,7 +975,7 @@ export default function App() {
                                             setCurrentTime(cTime);
                                             console.log(timePassed - videoStartTime)
 
-                                            if (videoStartTime && (timePassed - videoStartTime) > 10000 && cTime === 0) {
+                                            if (lyrics.length === 0 || (videoStartTime && (timePassed - videoStartTime) > 10000 && cTime === 0)) {
                                                 console.log(timePassed - videoStartTime);
                                                 setVideoPlaying(false);
                                                 setYoutubeUrl('');
@@ -1007,7 +1009,7 @@ export default function App() {
                                     {videoUnavailable ? (
                                         <Fragment>
                                             <Text style={{ fontSize: 20, textAlign: 'center' }}>
-                                            Unfortunately, this video did not load.
+                                            Unfortunately, this video could not be loaded, or had no captions.
                                             </Text>
                                             <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                                 Use another song or Youtube link to try again. 
