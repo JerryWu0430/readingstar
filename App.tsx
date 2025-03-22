@@ -833,10 +833,16 @@ export default function App() {
                                         pressed && { backgroundColor: '#005bb5' },
                                     ]}
                                     onPress={() => {
-                                        setYoutubeUrl(inputUrl);
-                                        getYoutubeEmbedUrl(inputUrl);
-                                        setInputUrl('');
-                                    }}
+                                        if (inputUrl.length > 0 && inputUrl.includes('youtube.com')) {
+                                            var url = inputUrl;
+                                            if (url.includes('&')) {
+                                                url = url.split('&')[0];
+                                            }
+                                            setYoutubeUrl(url);
+                                            getYoutubeEmbedUrl(url);
+                                            setInputUrl('');
+                                        }}
+                                    }
                                 >
                                     <Text style={styles.goButtonText}>Go</Text>
                                 </Pressable>
