@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Fragment } from 'react';
 import {
     View,
     Text,
@@ -42,6 +42,8 @@ export default function App() {
     const [currentLyric, setCurrentLyric] = useState('');
     const [inputUrl, setInputUrl] = useState('');
     const [currentTime, setCurrentTime] = useState(-1);
+    const [videoStartTime, setVideoStartTime] = useState(0);
+    const [videoUnavailable, setVideoUnavailable] = useState(false);
     const [songTitle, setSongTitle] = useState('');
     const [isFocusMode, setIsFocusMode] = useState(false);
     const colorScheme = useColorScheme();
@@ -128,6 +130,11 @@ export default function App() {
         setVideoPlaying(true);
         fetchYoutubeSubtitles(url);
         setFinalScore(-1);
+
+        const newStartTime = new Date().getTime();
+        console.log('Setting video start time:', newStartTime);
+        setVideoStartTime(newStartTime);
+
         try {
             const response = await fetch('http://localhost:8000/close_microphone', {
                 method: 'GET',
@@ -214,13 +221,13 @@ export default function App() {
                 },
                 body: JSON.stringify({"name": name, "song": song, "action": "remove"}),
             });
-            await fetchPlaylists();
         } catch (error) {
             console.error('Error removing playlist:', error);
         }
         if (playlistName === name) {
-            switchPlaylist(Object.keys(allPlaylistsGetter)[0]);
+            await switchPlaylist(Object.keys(allPlaylistsGetter)[0]);
         }
+        fetchPlaylists();
     };
 
     const createPlaylistJson = async (playlistName: string) => {
@@ -233,7 +240,10 @@ export default function App() {
                 },
                 body: JSON.stringify({"id": allPlaylistsGetter.length, "name": playlistName, "songs": [], "action": "create"}),
             });
-            await fetchPlaylists();
+
+            setAllPlaylistNames([...allPlaylistNames, playlistName]);
+            allPlaylistsGetter[playlistName] = [];
+            setAllPlaylistsGetter(allPlaylistsGetter);
             setPlaylistName(playlistName);
             setPlaylist([]);
         } catch (error) {
@@ -260,7 +270,6 @@ export default function App() {
                 allPlaylists[playlistName] = [...playlist, songItem];
                 setAllPlaylistsGetter(allPlaylists);
                 updatePlaylistJson([...playlist, songItem]);
-                fetchPlaylists();
             }
 
             setScore(0);
@@ -345,18 +354,20 @@ export default function App() {
                         time: parseFloat(item.$.start),
                     }));
                     setLyrics(lyricsArray);
-                    try{
-                        //call Post method full_lyrics to provide lyrics
-                        await fetch('http://localhost:8000/full_lyric', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ lyric: lyricsArray}),
-                        });
-                    }
-                    catch (error) {
-                        console.error('Error setting lyrics:', error);
+                    if (lyricsArray.length > 0) {
+                        try{
+                            //call Post method full_lyrics to provide lyrics
+                            await fetch('http://localhost:8000/full_lyric', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ lyric: lyricsArray}),
+                            });
+                        }
+                        catch (error) {
+                            console.error('Error setting lyrics:', error);
+                        }
                     }
                 });
             }
@@ -756,7 +767,7 @@ export default function App() {
                     <View style={styles.sidebar}>
                         <Text style={styles.playlistTitle}>{playlistName}</Text>
                         <ScrollView>
-                            {playlistLoaded && playlist ? (
+                            {playlistLoaded && playlist ? (playlist.length > 0 ? (
                                 playlist.map((song) => (
                                     <Pressable
                                         key={song.id}
@@ -774,11 +785,13 @@ export default function App() {
                                         >
                                             {song.name}
                                         </Text>
-                                        <SvgXml xml={deleteSvg} width={20} height={20} style={styles.iconTag} onPress={() => {removePlaylistJson(playlistName, song.name); fetchPlaylists()}}/>
+                                        <SvgXml xml={deleteSvg} width={20} height={20} style={styles.iconTag} onPress={() => {removePlaylistJson(playlistName, song.name)}}/>
                                     </Pressable>
                                 ))
                             ) : (
-                                <Text>Loading...</Text>
+                                <Text style={styles.playlistSubtitle}>Add some songs...</Text>
+                            )) : (
+                                <Text>Playlist empty.</Text>
                             )}
                         </ScrollView>
                     </View>
@@ -833,10 +846,16 @@ export default function App() {
                                         pressed && { backgroundColor: '#005bb5' },
                                     ]}
                                     onPress={() => {
-                                        setYoutubeUrl(inputUrl);
-                                        getYoutubeEmbedUrl(inputUrl);
-                                        setInputUrl('');
-                                    }}
+                                        if (inputUrl.length > 0 && inputUrl.includes('youtube.com')) {
+                                            var url = inputUrl;
+                                            if (url.includes('&')) {
+                                                url = url.split('&')[0];
+                                            }
+                                            setYoutubeUrl(url);
+                                            getYoutubeEmbedUrl(url);
+                                            setInputUrl('');
+                                        }}
+                                    }
                                 >
                                     <Text style={styles.goButtonText}>Go</Text>
                                 </Pressable>
@@ -875,7 +894,8 @@ export default function App() {
                           },
                           events: {
                             'onReady': onPlayerReady,
-                            'onStateChange': onPlayerStateChange
+                            'onStateChange': onPlayerStateChange,
+                            'onError': onPlayerError
                           }
                         });
                       }
@@ -890,7 +910,7 @@ export default function App() {
 
                       function onPlayerStateChange(event) {
                         if (event.data == YT.PlayerState.PLAYING) {
-                          // Handle player state change
+                          window.ReactNativeWebView.postMessage(JSON.stringify('video_play'));
                         } else if (event.data == YT.PlayerState.PAUSED) {
                           window.ReactNativeWebView.postMessage(JSON.stringify('video_pause'));
                         } else if (event.data == YT.PlayerState.ENDED) {
@@ -899,6 +919,10 @@ export default function App() {
                           // Handle other states
                           window.ReactNativeWebView.postMessage(JSON.stringify(event.data));
                         }
+                      }
+
+                      function onPlayerError(event) {
+                        window.ReactNativeWebView.postMessage(JSON.stringify(event.data));
                       }
                     </script>
                   </body>
@@ -942,8 +966,25 @@ export default function App() {
                                             } catch (error) {
                                                 console.error("Error fetching final score:", error);
                                             }
+                                        } else if (cTime === 'video_play') {
+                                            console.log('Video playing');
+                                            setCurrentTime(-1);
+                                            setVideoUnavailable(false);
                                         } else {
+                                            const timePassed = new Date().getTime();
                                             setCurrentTime(cTime);
+                                            console.log(timePassed - videoStartTime)
+
+                                            if (lyrics.length === 0 || (videoStartTime && (timePassed - videoStartTime) > 10000 && cTime === 0)) {
+                                                console.log(timePassed - videoStartTime);
+                                                setVideoPlaying(false);
+                                                setYoutubeUrl('');
+                                                setCurrentLyric('');
+                                                setLyrics([]);
+                                                removePlaylistJson(playlistName, selectedSong);
+                                                setVideoUnavailable(true);
+                                                return;
+                                            }
                                         }
                                     }}
                                 />) : 
@@ -965,8 +1006,18 @@ export default function App() {
                                 )
                             ) : (
                                 <View style={styles.overlay}>
+                                    {videoUnavailable ? (
+                                        <Fragment>
+                                            <Text style={{ fontSize: 20, textAlign: 'center' }}>
+                                            Unfortunately, this video could not be loaded, or had no captions.
+                                            </Text>
+                                            <Text style={{ fontSize: 20, textAlign: 'center' }}>
+                                                Use another song or Youtube link to try again. 
+                                            </Text>
+                                        </Fragment>
+                                    ) : (null)}
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
-                                        Click the sidebar or enter a YouTube link to start!
+                                        Click the sidebar or enter a YouTube link to play a song!
                                     </Text>
                                 </View>
                             )}
@@ -1030,8 +1081,10 @@ export default function App() {
                                     height={40}
                                     style={{ alignSelf: 'center', marginLeft: 5 }}
                                     onPress={() => {
-                                        createPlaylistJson(newPlaylistName);
-                                        setNewPlaylistName('');
+                                        if (newPlaylistName.length > 0) {
+                                            createPlaylistJson(newPlaylistName);
+                                            setNewPlaylistName('');
+                                        }
                                     }}
                                 />
                             </View>
@@ -1156,6 +1209,12 @@ const styles = StyleSheet.create({
     },
     playlistTitle: {
         fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 16,
+        color: '#444',
+    },
+    playlistSubtitle: {
+        fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 16,
         color: '#444',
