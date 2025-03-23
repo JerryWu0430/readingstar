@@ -227,8 +227,11 @@ def final_score():
 
     print(f"Final similarity: {similarity}")
     print("Recognized wav: ", recognized_wav)
-    
-    log_song(duration, sum(similarity_over_song) / len(similarity_over_song), similarity, (t-s))
+
+    if len(similarity_over_song) > 0:
+        log_song(duration, sum(similarity_over_song) / len(similarity_over_song), similarity, (t-s))
+    else:
+        log_song(duration, -1.0, similarity, (t-s))
     return JSONResponse(content={"final_score": similarity}, status_code=200)
 
 # FastAPI endpoint to post the playlist from playlists.json

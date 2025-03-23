@@ -182,8 +182,8 @@ class TestLiveMatchAPI(unittest.TestCase):
             written_content = mock_file.return_value.write.call_args[0][0]
             self.assertIn("New Song", written_content)
 
-    def test_update_playlist_remove(self):
-        """Test for removing a song and a playlist"""
+    def test_update_playlist_remove_song(self):
+        """Test for removing a song"""
         # Mock the initial playlists.json content with a playlist and a song
         initial_json = '{"playlists": [{"name": "Simple Test Playlist", "songs": [{"name": "Test Song"}]}]}'
         
@@ -205,6 +205,29 @@ class TestLiveMatchAPI(unittest.TestCase):
             written_content = mock_file.return_value.write.call_args[0][0]
             self.assertNotIn("Test Song", written_content)
             self.assertIn("Simple Test Playlist", written_content)  # Playlist still exists
+    
+    def test_update_playlist_remove_playlist(self):
+        """Test for deleting a playlist"""
+        # Mock the initial playlists.json content with a playlist and a song
+        initial_json = '{"playlists": [{"name": "Simple Test Playlist", "songs": [{"name": "Test Song"}]}]}'
+
+        with patch("builtins.open", mock_open(read_data=initial_json)) as mock_file:
+            mock_file.return_value.write.side_effect = lambda x: len(x)
+
+            # Test 1: Remove a song from the playlist
+            remove_song_request = {
+                "action": "remove",
+                "name": "Simple Test Playlist",
+                "song": ""
+            }
+
+            response = self.client.post("/update_playlist", json=remove_song_request)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()["message"], "remove completed.")
+            
+            # Verify that the written content no longer includes the playlist
+            written_content = mock_file.return_value.write.call_args[0][0]
+            self.assertNotIn("Simple Test Playlist", written_content)
 
     def test_update_lyric(self):
         """Test the update_lyric endpoint"""
