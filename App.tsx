@@ -785,7 +785,7 @@ export default function App() {
                                         >
                                             {song.name}
                                         </Text>
-                                        <SvgXml xml={deleteSvg} width={20} height={20} style={styles.iconTag} onPress={() => {removePlaylistJson(playlistName, song.name)}}/>
+                                        <SvgXml xml={deleteSvg} width={20} height={20} style={[styles.iconTag, {left: 'auto', right: 0 }]} onPress={() => {removePlaylistJson(playlistName, song.name)}}/>
                                     </Pressable>
                                 ))
                             ) : (
