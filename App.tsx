@@ -1202,8 +1202,10 @@ const styles = StyleSheet.create({
     emailText: {
         fontSize: 16,
         marginLeft: 12,
-        marginRight: 8,
+        marginRight: 0,
+        paddingTop: 7,
         color: '#333',
+        alignSelf: 'center',
     },
     titleBarRight: {
         flexDirection: 'row',
