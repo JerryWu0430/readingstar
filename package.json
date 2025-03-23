@@ -18,7 +18,7 @@
     "react-native-svg": "^15.11.1",
     "react-native-vector-icons": "^10.2.0",
     "react-native-webview": "^13.13.1",
-    "react-native-windows": "^0.76.8",
+    "react-native-windows": "^0.76.9",
     "react-native-xml2js": "^1.0.0"
   },
   "devDependencies": {

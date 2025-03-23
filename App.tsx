@@ -10,8 +10,8 @@ import {
     useColorScheme,
     Animated,
     Image,
+    Switch
 } from 'react-native';
-import Slider from '@react-native-community/slider';
 import WebView from 'react-native-webview';
 import { SvgXml } from 'react-native-svg';
 import { parseString } from 'react-native-xml2js';
@@ -55,7 +55,7 @@ export default function App() {
     const [allPlaylistNames, setAllPlaylistNames] = useState<string[]>([]);
     const [allPlaylistsGetter, setAllPlaylistsGetter] = useState<{ [key: string]: {id: number, name: string, url: string}[] }>({});
     const [playlistLoaded, setPlaylistLoaded] = useState(false);
-    const [showSettings, setShowSettings] = useState(false);
+    const [isScored, setIsScored] = useState(true);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     
     interface LyricsSettings {
@@ -120,6 +120,8 @@ export default function App() {
     }
 
     const useMountEffect = (f: () => void) => useEffect(() => { f(); }, []);
+
+    const onToggleSwitch = () => setIsScored(!isScored);
 
     const getYoutubeEmbedUrl = async (url: string): Promise<void> => {
         const videoId: string | undefined = url.split('v=')[1];
@@ -466,6 +468,18 @@ export default function App() {
                 <Text style={styles.titleText}>ReadingStar</Text>
                 <SvgXml xml={starSvg} width={20} height={20} />
                 <View style={styles.titleBarRight}>
+                    <Fragment>
+                        <Text style={styles.emailText}>
+                            Scoring on?
+                        </Text>
+                        <Switch
+                            trackColor={{false: '#faf9f6', true: '#faf9f6'}}
+                            thumbColor={isScored ? '#00b533' : '#dc2626'}
+                            onValueChange={onToggleSwitch}
+                            value={isScored}
+                            style={styles.switch}
+                        />
+                    </Fragment>
                     <Pressable
                         style={({ pressed }) => [
                             styles.iconButton,
@@ -823,9 +837,11 @@ export default function App() {
                     )}
 
                     <View style={[styles.contentOverlay, isFocusMode ? styles.contentOverlayFocus : null]}>
-                        <View style={[styles.scoreContainer, isFocusMode ? styles.scoreContainerFocus : null]}>
-                            <Text style={styles.scoreText}>Score: {score}</Text>
-                        </View>
+                        {isScored ? (
+                            <View style={[styles.scoreContainer, isFocusMode ? styles.scoreContainerFocus : null]}>
+                                <Text style={styles.scoreText}>Score: {score}</Text>
+                            </View>
+                        ) : null}
 
                         {/* Add this section for URL input */}
                         {!isFocusMode && (
@@ -992,12 +1008,12 @@ export default function App() {
                                     <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                         Well done for completing the song "{songTitle}"!
                                     </Text>
-                                    {score > 0 ? (
+                                    {isScored && score > 0 ? (
                                         <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                             You won {score} points!
                                         </Text>
                                     ) : null}
-                                    {finalScore > 0 ? (
+                                    {isScored && finalScore > 0 ? (
                                         <Text style={{ fontSize: 20, textAlign: 'center' }}>
                                             You were {Math.round(finalScore * 100)}% accurate!
                                         </Text>
@@ -1088,11 +1104,10 @@ export default function App() {
                                     }}
                                 />
                             </View>
-                            <ScrollView style={{ height: 200}}>
+                            <ScrollView style={{ height: 380}}>
                                 {playlistLoaded ? allPlaylistNames.map(name => (
-                                    <View style={styles.blockIcon}>
+                                    <View key={name} style={styles.blockIcon}>
                                         <Pressable
-                                            key={name}
                                             style={({ pressed }) => [
                                                 styles.button,
                                                 styles.submitButton,
@@ -1185,10 +1200,12 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     emailText: {
-        fontSize: 13,
+        fontSize: 16,
         marginLeft: 12,
-        marginRight: 8,
+        marginRight: 0,
+        paddingTop: 7,
         color: '#333',
+        alignSelf: 'center',
     },
     titleBarRight: {
         flexDirection: 'row',
@@ -1863,6 +1880,11 @@ const styles = StyleSheet.create({
     backgroundOptionTextActive: {
         backgroundColor: 'rgba(0, 120, 212, 0.8)',
     },
+    switch: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 8,
+    }
 });
 
 

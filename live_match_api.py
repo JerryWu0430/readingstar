@@ -131,7 +131,6 @@ recognized_text = ""
 stop_call = None
 stop_flag = True
 similarity_over_song = []
-final_similarity = 0.0
 
 # Transcription process
 @app.post("/transcribe")
