@@ -21,6 +21,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 from torch import no_grad
 import platform
+import subprocess
 
 # Set up OpenVINO and device
 device = "CPU"
@@ -388,7 +389,14 @@ def get_match():
         return JSONResponse(content={"match": "yes", "similarity": similarity})
     return JSONResponse(content={"match": "no", "similarity": similarity})
 
+
+def start_frontend():
+    subprocess.Popen("npm start", shell=True, cwd=os.path.abspath(os.path.dirname(__file__)))
+    subprocess.Popen("npm run windows", shell=True, cwd=os.path.abspath(os.path.dirname(__file__)))
+
+start_frontend()
+
 # Run FastAPI
 if __name__ == "__main__":
     multiprocessing.freeze_support()
-    uvicorn.run("live-match-api:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("live_match_api:app", host="0.0.0.0", port=8000, reload=False)

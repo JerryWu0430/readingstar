@@ -1088,11 +1088,10 @@ export default function App() {
                                     }}
                                 />
                             </View>
-                            <ScrollView style={{ height: 200}}>
+                            <ScrollView style={{ height: 380 }}>
                                 {playlistLoaded ? allPlaylistNames.map(name => (
-                                    <View style={styles.blockIcon}>
+                                    <View key={name} style={styles.blockIcon}>
                                         <Pressable
-                                            key={name}
                                             style={({ pressed }) => [
                                                 styles.button,
                                                 styles.submitButton,
