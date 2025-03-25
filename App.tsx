@@ -108,6 +108,9 @@ export default function App() {
                     {id: 4, name: 'Apples and Bananas', url: 'https://www.youtube.com/watch?v=r5WLXZspD1M'},
                     {id: 5, name: 'Hush Little Baby', url: 'https://www.youtube.com/watch?v=f_raDpgx_3M'},
                 ];
+                setAllPlaylistsGetter(allPlaylists);
+                setPlaylist(allPlaylists['Nursery Rhymes OG']);
+                setPlaylistName('Nursery Rhymes OG');
                 reject(error);
             }
             setAllPlaylistNames(Object.keys(allPlaylists));
