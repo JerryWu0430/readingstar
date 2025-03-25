@@ -96,7 +96,6 @@ export default function App() {
                 await setAllPlaylistsGetter(allPlaylists);
                 await setAllPlaylistNames(Object.keys(allPlaylists));
                 playlistName ?? setPlaylistName(Object.keys(allPlaylists)[0]);
-                console.log('Playlists loaded:', allPlaylists);
                 resolve();
                 await setPlaylist(allPlaylists[playlistName]);
             } catch (error) {
@@ -111,6 +110,8 @@ export default function App() {
                 setAllPlaylistsGetter(allPlaylists);
                 setPlaylist(allPlaylists['Nursery Rhymes OG']);
                 setPlaylistName('Nursery Rhymes OG');
+                setIsScored(false);
+                console.error('Failed to fetch playlists:', error);
                 reject(error);
             }
             setAllPlaylistNames(Object.keys(allPlaylists));
@@ -137,7 +138,6 @@ export default function App() {
         setFinalScore(-1);
 
         const newStartTime = new Date().getTime();
-        console.log('Setting video start time:', newStartTime);
         setVideoStartTime(newStartTime);
 
         try {
@@ -161,8 +161,6 @@ export default function App() {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
-            console.log('Transcription started');
         } catch (error) {
             console.error('Failed to start transcription:', error);
         }
@@ -203,7 +201,6 @@ export default function App() {
 
     const updatePlaylistJson = async (playlist : {id: number, name: string, url: string}[]) => {
         try {
-            console.log('Updating playlist:', playlistName, "with", playlist);
             await fetch('http://localhost:8000/update_playlist', {
                 method: 'POST',
                 headers: {
@@ -218,7 +215,6 @@ export default function App() {
 
     const removePlaylistJson = async (name: string, song: string) => {
         try {
-            console.log('Removing playlist:', name);
             await fetch('http://localhost:8000/update_playlist', {
                 method: 'POST',
                 headers: {
@@ -237,7 +233,6 @@ export default function App() {
 
     const createPlaylistJson = async (playlistName: string) => {
         try {
-            console.log('Creating playlist:', playlistName);
             await fetch('http://localhost:8000/update_playlist', {
                 method: 'POST',
                 headers: {
@@ -261,7 +256,6 @@ export default function App() {
             let title = findFromPlaylist(url).name ?? '';
             // if url not in playlist, fetch song title
             if (!title) {
-                console.log('Fetching song title...');
                 const response = await fetch(url);
                 const html = await response.text();
                 const titleIndex = html.indexOf('<title>');
@@ -276,9 +270,7 @@ export default function App() {
                 setAllPlaylistsGetter(allPlaylists);
                 updatePlaylistJson([...playlist, songItem]);
             }
-
             setScore(0);
-            console.log('Loading song:', title);
             setSongTitle(title);
             setSelectedSong(title);
         } catch (error) {
@@ -301,17 +293,15 @@ export default function App() {
         if (allPlaylistsGetter[playlistName]) {
             setPlaylistLoaded(false);
             setPlaylistName(playlistName);
-            console.log('Switching playlist:', playlistName);
             setPlaylist(allPlaylistsGetter[playlistName]);
             setPlaylistLoaded(true);
         } else {
-            console.log('Playlist not found:', playlistName);
+            console.error('Playlist not found:', playlistName);
         }
     }
 
     const switchDifficulty = (difficulty: string) => {
         setDifficulty(difficulty);
-        console.log('Switching difficulty to:', difficulty);
     }
 
     const fetchYoutubeSubtitles = async (url: string) => {
@@ -396,7 +386,6 @@ export default function App() {
 
             // Only update and call startMatching if the lyric has changed
             if (currentLyric !== previousLyricRef.current) {
-                console.log('Updating Lyric:', currentLyric);
                 previousLyricRef.current = currentLyric; // Update previous lyric
                 setCurrentLyric(currentLyric); // Update state
                 startMatching(currentLyric); // Call startMatching
@@ -409,8 +398,6 @@ export default function App() {
 
     useEffect(() => {
         const handleAppStateChange = (nextAppState: AppStateStatus) => {
-          console.log("App state changed to:", nextAppState);
-      
           if (nextAppState === "inactive") {
             try {
               fetch("http://localhost:8000/close_microphone", {
@@ -952,7 +939,6 @@ export default function App() {
                                     onMessage={async (event) => {
                                         const cTime = JSON.parse(event.nativeEvent.data);
                                         if (cTime === 'video_end') {
-                                            console.log('Video ended');
                                             setVideoPlaying(false);
                                             try {
                                                 await fetch('http://localhost:8000/close_microphone', {
@@ -961,7 +947,6 @@ export default function App() {
                                                         'Content-Type': 'application/json',
                                                     },
                                                 });
-                                                console.log('Microphone stopped');
                                             } catch (error) {
                                                 console.error('Failed to stop microphone:', error);
                                             }
@@ -980,22 +965,17 @@ export default function App() {
                                                 
                                                 const data = await response.json();
                                                 setFinalScore(data.final_score);
-                                                
-                                                console.log("Final Score:", data.final_score);
                                             } catch (error) {
                                                 console.error("Error fetching final score:", error);
                                             }
                                         } else if (cTime === 'video_play') {
-                                            console.log('Video playing');
                                             setCurrentTime(-1);
                                             setVideoUnavailable(false);
                                         } else {
                                             const timePassed = new Date().getTime();
                                             setCurrentTime(cTime);
-                                            console.log(timePassed - videoStartTime)
 
                                             if (lyrics.length === 0 || (videoStartTime && (timePassed - videoStartTime) > 10000 && cTime === 0)) {
-                                                console.log(timePassed - videoStartTime);
                                                 setVideoPlaying(false);
                                                 setYoutubeUrl('');
                                                 setCurrentLyric('');
