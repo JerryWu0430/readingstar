@@ -123,7 +123,6 @@ def log_song(duration: float, average_similarity: float, final_score: float, tim
     log_entry = f"{datetime.now()}, {duration}, {average_similarity}, {final_score}, {time_taken}, {platform.processor()}, {device}, {platform.machine()}, {platform.platform()}"
     with open("song_log.log", "a") as f:
         f.write(log_entry + "\n")
-        print(log_entry)
         f.close()
 
 similarity = 0.0
@@ -138,7 +137,6 @@ def process_audio():
     """
     Record audio, process it, and compare it to the current lyric.
     """
-    print("Transcription process started")
     global stop_call, source
     with source:
         recorder.adjust_for_ambient_noise(source)
@@ -167,10 +165,8 @@ def process_audio():
                 genai_result = ov_pipe.generate(audio_np)
                 # Generate recognized text transcription
                 recognized_text = str(genai_result).strip()
-                print(f"Recognized: {recognized_text}")
             else:
                 sleep(0.1)
-        print("Recording stopped, saving file...")
         save_audio_to_file(recorded_audio.getvalue())
     except Exception as e:
         print(f"Error during transcription: {e}")
@@ -191,13 +187,11 @@ def close_microphone():
 
 def save_audio_to_file(audio_bytes):
     """ Saves recorded audio to a WAV file """
-    print("Saving recorded audio...")
     with wave.open("recorded_audio.wav", "wb") as wf:
         wf.setnchannels(1)
         wf.setsampwidth(2)
         wf.setframerate(16000)
         wf.writeframes(audio_bytes)
-    print("Audio saved successfully as recorded_audio.wav!")
 
 @app.get("/final_score")
 def final_score():
@@ -224,13 +218,18 @@ def final_score():
     similarity= float(embedding_similarity_ov(full_lyric, recognized_wav))
     t = process_time()
 
-    print(f"Final similarity: {similarity}")
-    print("Recognized wav: ", recognized_wav)
-
     if len(similarity_over_song) > 0:
         log_song(duration, sum(similarity_over_song) / len(similarity_over_song), similarity, (t-s))
     else:
         log_song(duration, -1.0, similarity, (t-s))
+    
+    try:
+        os.remove("recorded_audio.wav")
+    except FileNotFoundError:
+        print("Recorded audio file not found for deletion.")
+    except Exception as e:
+        print(f"Error deleting recorded audio file: {e}")
+
     return JSONResponse(content={"final_score": similarity}, status_code=200)
 
 # FastAPI endpoint to post the playlist from playlists.json
@@ -255,7 +254,6 @@ def update_playlist(playlist: dict):
         allPlaylists = f.read()
     
     allPlaylists = json.loads(allPlaylists)
-    print(f"\nUpdating playlist: {playlist}")
     action = playlist.pop('action', None)
 
     # check if this is a delete request
@@ -268,25 +266,21 @@ def update_playlist(playlist: dict):
                         for s in pl['songs']:
                             if s["name"] == song:
                                 pl['songs'].remove(s)
-                                print(f"Deleted song: {song}")
                                 break
                     else:
                         allPlaylists["playlists"].remove(pl)
-                        print(f"Deleted playlist: {playlist}")
                     break
     
     # check if this is an add request
     elif action == "create":
         if playlist['name'] not in [pl['name'] for pl in allPlaylists["playlists"]]:
             allPlaylists["playlists"].append(playlist)
-            print(f"Added playlist: {playlist}")
 
     # update the playlist
     elif action == "update":
         for pl in allPlaylists["playlists"]:
             if pl['name'] == playlist['name']:
                 pl['songs'] = playlist['songs']
-                print("Updated playlist: ", pl)
                 break
 
     with open('playlists.json', 'w') as f:
@@ -304,7 +298,6 @@ def update_lyric(phrase: Phrase):
     global current_verse, prev_verse
     prev_verse = current_verse
     current_verse = phrase.lyric
-    print(f"Updated current lyric to: '{current_verse}'")
 
     return JSONResponse(
         content={"message": f"Updated current lyric to: '{current_verse}' and processed audio."}, 
@@ -324,7 +317,6 @@ def full_lyric(request: Lyric):
     similarity_over_song = []
     lyric_array = request.lyric
     full_lyric = " ".join([entry["lyric"] for entry in lyric_array])
-    print(f"Received full lyric: {full_lyric}")
     return JSONResponse(content={"message": "Received full lyric."}, status_code=200)
 
 threshold = 0.3
@@ -341,7 +333,6 @@ def change_threshold(request: ThresholdLevel):
         threshold = 0.35
     elif level == "Hard":
         threshold = 0.5
-    print(f"Threshold changed to {threshold}")
     return JSONResponse(content={"message": f"Threshold changed to {threshold}"}, status_code=200)
 
 
@@ -380,13 +371,10 @@ def get_match():
         (similarty_prev, prev_verse),
         (similarity_curr, current_verse)
     ]
-    similarity, similarity_verse = max(similarities, key=lambda x: x[0])
-    print(f"\nSimilarity: {similarity}, \nSimilarity verse: {similarity_verse}, \nRecognized text: {recognized_text}")
-    
+    similarity, similarity_verse = max(similarities, key=lambda x: x[0])    
     similarity_over_song.append(similarity)
     
     if (similarity > threshold) and recognized_text != "":
-        print(f"Last verse: {similarity_verse}", f"Recognized text: {recognized_text}", f"Similarity: {similarity}")
         return JSONResponse(content={"match": "yes", "similarity": similarity})
     return JSONResponse(content={"match": "no", "similarity": similarity})
 
