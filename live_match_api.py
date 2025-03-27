@@ -21,6 +21,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 from torch import no_grad
 import platform
+import requests
 
 # Set up OpenVINO and device
 device = "CPU"
@@ -380,5 +381,4 @@ def get_match():
 
 # Run FastAPI
 if __name__ == "__main__":
-    multiprocessing.freeze_support()
-    uvicorn.run("live-match-api:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("live_match_api:app", host="0.0.0.0", port=8000, reload=False, workers=1, loop="asyncio", http="h11")
