@@ -380,5 +380,4 @@ def get_match():
 
 # Run FastAPI
 if __name__ == "__main__":
-    multiprocessing.freeze_support()
-    uvicorn.run("live-match-api:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("live_match_api:app", host="0.0.0.0", port=8000, reload=False, workers=1, loop="asyncio", http="h11")
