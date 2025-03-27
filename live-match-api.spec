@@ -67,8 +67,9 @@ pyz = PYZ(a.pure, a.zipped_data)
 exe = EXE(
     pyz,
     a.scripts,
+    a.binaries,
+    a.datas,
     [],
-    exclude_binaries=True,
     name='live_match_api',
     debug=False,
     bootloader_ignore_signals=False,
@@ -77,15 +78,4 @@ exe = EXE(
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name='live_match_api',
 )

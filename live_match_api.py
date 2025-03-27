@@ -11,6 +11,7 @@ import openvino_genai as ov_genai
 import speech_recognition as sr
 import uvicorn
 from time import sleep, process_time
+from uvicorn import Config, Server
 import json
 import multiprocessing
 import wave
@@ -23,7 +24,7 @@ from torch import no_grad
 import platform
 
 # Set up OpenVINO and device
-device = "CPU"
+device = "AUTO"
 # Adjust the model path to be relative to the executable location
 model_dir = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), "whisper-tiny-en-openvino")
 
@@ -232,13 +233,16 @@ def final_score():
 
     return JSONResponse(content={"final_score": similarity}, status_code=200)
 
+def playlist_path():
+    return  os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), 'playlists.json')
+
 # FastAPI endpoint to post the playlist from playlists.json
 @app.get('/playlists')
 def get_playlist():
     """
     Post the playlist from playlist.json.
     """
-    playlists_path = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), 'playlists.json')
+    playlists_path = playlist_path()
     
     with open(playlists_path, 'r') as f:
         allPlaylists = f.read()
@@ -250,7 +254,7 @@ def update_playlist(playlist: dict):
     """
     Update a playlist from the app interface.
     """
-    with open('playlists.json', 'r') as f:
+    with open(playlist_path(), 'r') as f:
         allPlaylists = f.read()
     
     allPlaylists = json.loads(allPlaylists)
@@ -258,7 +262,7 @@ def update_playlist(playlist: dict):
 
     # check if this is a delete request
     if action == "remove":
-        with open('playlists.json', 'w') as f:
+        with open(playlist_path(), 'w') as f:
             for pl in allPlaylists["playlists"]:
                 if pl['name'] == playlist['name']:
                     song = playlist.pop('song', None)
@@ -283,7 +287,7 @@ def update_playlist(playlist: dict):
                 pl['songs'] = playlist['songs']
                 break
 
-    with open('playlists.json', 'w') as f:
+    with open(playlist_path(), 'w') as f:
         f.write(json.dumps(allPlaylists, indent=4))
         f.close()
     
@@ -380,5 +384,6 @@ def get_match():
 
 # Run FastAPI
 if __name__ == "__main__":
-    multiprocessing.freeze_support()
-    uvicorn.run("live-match-api:app", host="0.0.0.0", port=8000, reload=False)
+    config = Config(app="live_match_api:app", host="0.0.0.0", port=8000, reload=False, workers=1, loop="asyncio", http="h11")
+    server = Server(config)
+    server.run()
