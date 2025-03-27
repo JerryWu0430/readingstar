@@ -11,6 +11,7 @@ import openvino_genai as ov_genai
 import speech_recognition as sr
 import uvicorn
 from time import sleep, process_time
+from uvicorn import Config, Server
 import json
 import multiprocessing
 import wave
@@ -380,4 +381,6 @@ def get_match():
 
 # Run FastAPI
 if __name__ == "__main__":
-    uvicorn.run("live_match_api:app", host="0.0.0.0", port=8000, reload=False, workers=1, loop="asyncio", http="h11")
+    config = Config(app="live_match_api:app", host="0.0.0.0", port=8000, reload=False, workers=1, loop="asyncio", http="h11")
+    server = Server(config)
+    server.run()
