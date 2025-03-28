@@ -24,7 +24,7 @@ from torch import no_grad
 import platform
 
 # Set up OpenVINO and device
-device = "AUTO"
+device = "CPU"
 # Adjust the model path to be relative to the executable location
 model_dir = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(__file__)), "whisper-tiny-en-openvino")
 
