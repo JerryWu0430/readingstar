@@ -1,17 +1,17 @@
-pip install optimum['openvino']
-pip install openvino-genai
-pip install numpy
-pip install pydantic
-pip install uvicorn
-pip install fastapi
-pip install SpeechRecognition
-pip install iPython
-pip install pyaudio
-pip install ipywidgets
-pip install sounddevice
-pip install sentence_transformers
-pip install scikit-learn
-pip install pytest
-pip install httpx
-pip install coverage
+optimum[openvino]
+openvino-genai
+numpy
+pydantic
+uvicorn
+fastapi
+SpeechRecognition
+iPython
+pyaudio
+ipywidgets
+sounddevice
+sentence_transformers
+scikit-learn
+pytest
+httpx
+coverage
 
