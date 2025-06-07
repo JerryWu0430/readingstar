@@ -22,6 +22,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 from torch import no_grad
 import platform
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # Set up OpenVINO and device
 device = "CPU"
@@ -117,6 +119,14 @@ class ThresholdLevel(BaseModel):
     level: str
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Replace with your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def log_song(duration: float, average_similarity: float, final_score: float, time_taken):
     global device
