@@ -24,6 +24,53 @@ from torch import no_grad
 import platform
 from fastapi.middleware.cors import CORSMiddleware
 
+import os
+import sys
+
+# PATCH: Fix transformers docstring issue for PyInstaller - MUST BE FIRST
+def patch_transformers_for_pyinstaller():
+    try:
+        import transformers.utils.doc
+        transformers.utils.doc.get_docstring_indentation_level = lambda x: 0
+        
+        def safe_docstring_decorator(docstring):
+            def decorator(fn):
+                return fn
+            return decorator
+            
+        transformers.utils.doc.add_start_docstrings = safe_docstring_decorator
+        transformers.utils.doc.add_end_docstrings = safe_docstring_decorator
+        
+        if hasattr(transformers.utils.doc, 'add_code_sample_docstrings'):
+            transformers.utils.doc.add_code_sample_docstrings = safe_docstring_decorator
+        if hasattr(transformers.utils.doc, 'copy_func'):
+            transformers.utils.doc.copy_func = lambda f: f
+            
+    except (ImportError, AttributeError):
+        pass
+
+def patch_openvino_tools():
+    try:
+        import sys
+        import types
+        
+        # Create dummy openvino.tools and openvino.tools.mo modules
+        if 'openvino.tools' not in sys.modules:
+            openvino_tools = types.ModuleType('openvino.tools')
+            sys.modules['openvino.tools'] = openvino_tools
+            
+        if 'openvino.tools.mo' not in sys.modules:
+            openvino_tools_mo = types.ModuleType('openvino.tools.mo')
+            sys.modules['openvino.tools.mo'] = openvino_tools_mo
+            
+    except Exception:
+        pass
+
+# Apply the patch immediately
+patch_transformers_for_pyinstaller()
+patch_openvino_tools()
+
+
 
 # Set up OpenVINO and device
 device = "CPU"
