@@ -1,5 +1,5 @@
-optimum[openvino]
-openvino-genai
+optimum[openvino]==1.23.3
+openvino-genai==2024.6.0.0
 numpy
 pydantic
 uvicorn
@@ -9,9 +9,9 @@ iPython
 pyaudio
 ipywidgets
 sounddevice
-sentence_transformers
+sentence_transformers==3.3.1
 scikit-learn
 pytest
 httpx
 coverage
-
+transformers==4.36.2
